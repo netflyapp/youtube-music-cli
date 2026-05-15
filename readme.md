@@ -28,7 +28,17 @@ A powerful Terminal User Interface (TUI) music player for YouTube Music
 - 🖥️ **Headless Mode** - Run without TUI for scripting
 - 💾 **Downloads** - Save tracks/playlists/artists with `Shift+D`
 - 🏷️ **Metadata Tagging** - Auto-tag title/artist/album with optional cover art
-- ⚡️ **Shell Completions** - `ymc completions <bash|zsh|powershell|fish>` emits scripts you can source or save so the CLI (also available as `ymc`) tab-completes subcommands and flags
+ - ⚡️ **Shell Completions** - `ymc completions <bash|zsh|powershell|fish>` emits scripts you can source or save so the CLI (also available as `ymc`) tab-completes subcommands and flags
+
+## Support the Project
+
+If you find youtube-music-cli useful, consider supporting its development:
+
+- ☕ [Buy Me a Coffee](https://buymeacoffee.com/involvex)
+- 🪙 [PayPal](https://paypal.me/involvex)
+- ⌨️ [GitHub Sponsors](https://github.com/sponsors/involvex?sponsor=1)
+
+Your support helps keep this project alive and improving!
 
 ## Roadmap
 
@@ -425,10 +435,4 @@ Made with ❤️ for music lovers
 
 </div>
 
-## Supporting
 
-**[☕ Buymeacoffee](https://buymeacoffee.com/involvex)**
-
-**[🪙 Paypal](https://paypal.me/involvex)**
-
-**[⌨️ Github Sponsors](https://github.com/sponsors/involvex)**

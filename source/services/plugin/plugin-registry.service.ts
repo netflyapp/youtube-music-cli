@@ -2,6 +2,8 @@
 import type {
 	PluginInstance,
 	PluginPermissions,
+	PluginPlayerAPI,
+	PluginNavigationAPI,
 } from '../../types/plugin.types.ts';
 import {getPluginLoaderService} from './plugin-loader.service.ts';
 import {getPluginPermissionsService} from './plugin-permissions.service.ts';
@@ -10,8 +12,41 @@ import {logger} from '../logger/logger.service.ts';
 import {CONFIG_DIR} from '../../utils/constants.ts';
 import {join} from 'node:path';
 import {existsSync, readdirSync} from 'node:fs';
+import {createPluginContext} from './plugin-context.ts';
 
 const PLUGINS_DIR = join(CONFIG_DIR, 'plugins');
+
+// Stub implementations for headless mode
+function createStubPlayerAPI(): PluginPlayerAPI {
+	return {
+		play: async () => {},
+		pause: () => {},
+		resume: () => {},
+		stop: () => {},
+		next: () => {},
+		previous: () => {},
+		seek: () => {},
+		setVolume: () => {},
+		getVolume: () => 70,
+		getCurrentTrack: () => null,
+		getQueue: () => [],
+		addToQueue: () => {},
+		removeFromQueue: () => {},
+		clearQueue: () => {},
+		shuffle: () => {},
+		setRepeat: () => {},
+	};
+}
+
+function createStubNavigationAPI(): PluginNavigationAPI {
+	return {
+		navigate: () => {},
+		goBack: () => {},
+		getCurrentView: () => '',
+		registerView: () => {},
+		unregisterView: () => {},
+	};
+}
 
 /**
  * Plugin registry service - manages all loaded plugins
@@ -21,9 +56,46 @@ class PluginRegistryService {
 	private pluginLoader = getPluginLoaderService();
 	private permissionsService = getPluginPermissionsService();
 	private configService = getConfigService();
+	private playerAPI: PluginPlayerAPI;
+	private navigationAPI: PluginNavigationAPI;
 
 	constructor() {
 		this.plugins = new Map();
+		// Initialize with stubs so plugins always have a context, even in headless mode
+		this.playerAPI = createStubPlayerAPI();
+		this.navigationAPI = createStubNavigationAPI();
+	}
+
+	/**
+	 * Set the player API for plugin contexts (call before loading plugins)
+	 */
+	setPlayerAPI(api: PluginPlayerAPI): void {
+		this.playerAPI = api;
+	}
+
+	/**
+	 * Set the navigation API for plugin contexts (call before loading plugins)
+	 */
+	setNavigationAPI(api: PluginNavigationAPI): void {
+		this.navigationAPI = api;
+	}
+
+	/**
+	 * Ensure a plugin has a context initialized
+	 */
+	private ensurePluginContext(plugin: PluginInstance): void {
+		if (plugin.context) {
+			return; // Already initialized
+		}
+		if (!this.playerAPI || !this.navigationAPI) {
+			// No real APIs provided yet; will be initialized later when set
+			return;
+		}
+		plugin.context = createPluginContext(
+			plugin.manifest,
+			this.playerAPI,
+			this.navigationAPI,
+		);
 	}
 
 	/**
@@ -43,6 +115,9 @@ class PluginRegistryService {
 			'PluginRegistryService',
 			`Registered plugin: ${instance.manifest.name}`,
 		);
+
+		// Ensure context is initialized if APIs are available
+		this.ensurePluginContext(instance);
 
 		return instance;
 	}
@@ -211,13 +286,7 @@ class PluginRegistryService {
 
 		for (const pluginDir of pluginDirs) {
 			try {
-				const instance = await this.loadPlugin(pluginDir);
-
-				// Check if plugin was previously enabled
-				const savedState = this.getSavedPluginState(instance.manifest.id);
-				if (savedState?.enabled) {
-					await this.enablePlugin(instance.manifest.id);
-				}
+				await this.loadPlugin(pluginDir);
 			} catch (error) {
 				logger.error(
 					'PluginRegistryService',

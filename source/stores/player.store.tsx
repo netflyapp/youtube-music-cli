@@ -336,6 +336,7 @@ type PlayerContextValue = {
 	play: (track: Track) => void;
 	pause: () => void;
 	resume: () => void;
+	stop: () => void;
 	next: () => void;
 	previous: () => void;
 	seek: (position: number) => void;
@@ -1027,6 +1028,7 @@ export function PlayerProvider({children}: {children: ReactNode}) {
 			},
 			pause: () => dispatch({category: 'PAUSE'}),
 			resume: () => dispatch({category: 'RESUME'}),
+			stop: () => dispatch({category: 'STOP'}),
 			next: () => dispatch({category: 'NEXT'}),
 			previous: () => dispatch({category: 'PREVIOUS'}),
 			seek: (position: number) => dispatch({category: 'SEEK', position}),

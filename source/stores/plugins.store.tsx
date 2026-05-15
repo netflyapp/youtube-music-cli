@@ -11,10 +11,17 @@ import type {
 	PluginInstance,
 	AvailablePlugin,
 	PluginInstallResult,
+	PluginPlayerAPI,
+	PluginNavigationAPI,
 } from '../types/plugin.types.ts';
 import {getPluginRegistryService} from '../services/plugin/plugin-registry.service.ts';
 import {getPluginInstallerService} from '../services/plugin/plugin-installer.service.ts';
 import {getPluginUpdaterService} from '../services/plugin/plugin-updater.service.ts';
+import {getConfigService} from '../services/config/config.service.ts';
+import {usePlayer} from '../hooks/usePlayer.ts';
+import {useNavigation} from '../hooks/useNavigation.ts';
+import type {Track} from '../types/youtube-music.types.ts';
+import {logger} from '../services/logger/logger.service.ts';
 
 interface PluginsState {
 	installedPlugins: PluginInstance[];
@@ -87,6 +94,61 @@ export function PluginsProvider({children}: {children: ReactNode}) {
 	const registryService = getPluginRegistryService();
 	const installerService = getPluginInstallerService();
 	const updaterService = getPluginUpdaterService();
+
+	// Get player and navigation contexts for plugin API
+	const player = usePlayer();
+	const navigation = useNavigation();
+
+	// Build player API for plugins
+	const playerAPI: PluginPlayerAPI = {
+		play: async (track: Track) => {
+			player.play(track);
+		},
+		pause: () => player.pause(),
+		resume: () => player.resume(),
+		stop: () => player.dispatch({category: 'STOP'}),
+		next: () => player.next(),
+		previous: () => player.previous(),
+		seek: (position: number) => player.seek(position),
+		setVolume: (volume: number) => player.setVolume(volume),
+		getVolume: () => player.state.volume,
+		getCurrentTrack: () => player.state.currentTrack,
+		getQueue: () => player.state.queue,
+		addToQueue: (track: Track) => player.addToQueue(track),
+		removeFromQueue: (index: number) => player.removeFromQueue(index),
+		clearQueue: () => player.clearQueue(),
+		shuffle: (enabled: boolean) => {
+			if (player.state.shuffle !== enabled) {
+				// Toggle to change shuffle state (accepts only toggle for now)
+				player.dispatch({category: 'TOGGLE_SHUFFLE'});
+			}
+		},
+		setRepeat: (_mode: 'off' | 'all' | 'one') => {
+			// Not fully implemented; placeholder
+			logger.warn('PluginsProvider', 'setRepeat not implemented yet');
+		},
+	};
+
+	// Build navigation API for plugins
+	const navigationAPI: PluginNavigationAPI = {
+		navigate: (view: string) =>
+			navigation.dispatch({category: 'NAVIGATE', view}),
+		goBack: () => navigation.dispatch({category: 'GO_BACK'}),
+		getCurrentView: () => navigation.state.currentView,
+		registerView: (_viewId: string, _component: React.ReactElement) => {
+			console.warn('Plugin registerView not implemented');
+		},
+		unregisterView: (_viewId: string) => {
+			console.warn('Plugin unregisterView not implemented');
+		},
+	};
+
+	// Set APIs on registry before any plugin loads (once on mount)
+	useEffect(() => {
+		registryService.setPlayerAPI(playerAPI);
+		registryService.setNavigationAPI(navigationAPI);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const refreshPlugins = () => {
 		const plugins = registryService.getAllPlugins();
@@ -205,12 +267,32 @@ export function PluginsProvider({children}: {children: ReactNode}) {
 		}
 	};
 
-	// Load plugins on mount
+	// Load plugins on mount, initialize contexts, and restore enabled state
 	useEffect(() => {
+		// Set APIs on registry before loading plugins
+		registryService.setPlayerAPI(playerAPI);
+		registryService.setNavigationAPI(navigationAPI);
+
 		const loadPlugins = async () => {
 			await registryService.loadAllPlugins();
-			const plugins = registryService.getAllPlugins();
-			dispatch({type: 'SET_INSTALLED', plugins});
+
+			// Restore previously enabled plugins
+			const config = getConfigService();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const pluginStates = config.get('pluginStates' as any) as
+				| Record<string, {enabled: boolean}>
+				| undefined;
+			for (const plugin of registryService.getAllPlugins()) {
+				if (pluginStates?.[plugin.manifest.id]?.enabled && !plugin.enabled) {
+					await registryService.enablePlugin(plugin.manifest.id);
+				}
+			}
+
+			// Update state
+			dispatch({
+				type: 'SET_INSTALLED',
+				plugins: registryService.getAllPlugins(),
+			});
 		};
 		void loadPlugins();
 		// eslint-disable-next-line react-hooks/exhaustive-deps

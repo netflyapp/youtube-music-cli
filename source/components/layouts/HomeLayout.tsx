@@ -141,6 +141,10 @@ export default function HomeLayout() {
 	const filledWidth =
 		duration > 0 ? Math.floor((progress / duration) * barWidth) : 0;
 
+	// Extract artist string from current track
+	const currentTrackArtists =
+		playerState.currentTrack?.artists?.map(a => a.name).join(', ') ?? '';
+
 	return (
 		<Box flexDirection="column" paddingX={1} paddingY={0}>
 			{/* Header */}
@@ -296,7 +300,12 @@ export default function HomeLayout() {
 								playing:{' '}
 							</Text>
 							<Text bold color={theme.colors.primary}>
-								{truncate(playerState.currentTrack.title, columns - 45)}
+								{truncate(
+									`${playerState.currentTrack.title}${
+										currentTrackArtists ? ' - ' + currentTrackArtists : ''
+									}`,
+									columns - 45,
+								)}
 							</Text>
 						</Box>
 						<Text color={theme.colors.dim}>

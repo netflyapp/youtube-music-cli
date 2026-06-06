@@ -19,7 +19,8 @@
 		"README.md",
 		"CHANGELOG.md",
 		"LICENSE",
-		".github/FUNDING.yml"
+		".github/FUNDING.yml",
+		"assets/player-preview.gif"
 	],
 	"icon": "assets/icon2.PNG",
 	"sponsor": {

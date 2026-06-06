@@ -127,6 +127,10 @@ Launch the TUI:
 youtube-music-cli
 ```
 
+<p align="center">
+  <img src="{{ '/assets/player-preview.gif' | relative_url }}" alt="youtube-music-cli terminal preview" width="800">
+</p>
+
 You should see the main player interface. Press `?` for help or `/` to search.
 
 ## Basic Usage

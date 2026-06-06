@@ -4,6 +4,10 @@
 
 A powerful Terminal User Interface (TUI) music player for YouTube Music
 
+<p align="center">
+  <img src="assets/player-preview.gif" alt="youtube-music-cli terminal preview" width="800">
+</p>
+
 [![npm version](https://img.shields.io/npm/v/@involvex/youtube-music-cli.svg)](https://www.npmjs.com/package/@involvex/youtube-music-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

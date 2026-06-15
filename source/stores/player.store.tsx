@@ -566,13 +566,18 @@ function PlayerManager() {
 					if (config.get('discordRichPresence')) {
 						const discord = getDiscordRpcService();
 						discord.setEnabled(true);
-						void discord.connect().then(() =>
-							discord.updateActivity({
-								title: track.title,
-								artist: artists,
-								startTimestamp: Date.now(),
-							}),
-						);
+						void discord
+							.connect()
+							.then(() =>
+								discord.updateActivity({
+									title: track.title,
+									artist: artists,
+									startTimestamp: Date.now(),
+								}),
+							)
+							.catch(() => {
+								// Discord not available; already logged by service
+							});
 					}
 
 					// MPRIS (Linux)

@@ -47,7 +47,9 @@ export class DiscordRpcService {
 
 					await new Promise<void>((resolve, reject) => {
 						const timeout = setTimeout(() => {
-							client.destroy();
+							// destroy() is async and rejects when socket was never connected;
+							// fire-and-forget with .catch() to prevent unhandled rejection
+							void client.destroy().catch(() => {});
 							reject(new Error(`Connection timeout for pipe ${pipeName}`));
 						}, 10000);
 
@@ -68,7 +70,9 @@ export class DiscordRpcService {
 						client
 							.login({clientId: '1473580336964177960'})
 							.catch((err: unknown) => {
-								client.destroy();
+								// destroy() is async and rejects when socket was never connected;
+								// fire-and-forget with .catch() to prevent unhandled rejection
+								void client.destroy().catch(() => {});
 								reject(err);
 							});
 					});

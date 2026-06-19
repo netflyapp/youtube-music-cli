@@ -1,3 +1,13 @@
+## [0.0.80](https://github.com/involvex/youtube-music-cli/compare/v0.0.79...v0.0.80) (2026-06-19)
+
+### Bug Fixes
+
+- **install:** require bun in install scripts to match runtime dependency ([83e1772](https://github.com/involvex/youtube-music-cli/commit/83e177266739426c619701f0859610464556365e)), closes [#27](https://github.com/involvex/youtube-music-cli/issues/27)
+
+### Features
+
+- add Node.js production build support ([ae8b506](https://github.com/involvex/youtube-music-cli/commit/ae8b50658879b5f99b029065a5d1a52c25cd4fd1))
+
 ## [0.0.79](https://github.com/involvex/youtube-music-cli/compare/v0.0.78...v0.0.79) (2026-06-15)
 
 ## [0.0.78](https://github.com/involvex/youtube-music-cli/compare/v0.0.77...v0.0.78) (2026-06-06)

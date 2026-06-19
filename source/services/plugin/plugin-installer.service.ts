@@ -12,6 +12,17 @@ const DEFAULT_PLUGIN_REPO =
 	'https://github.com/involvex/youtube-music-cli-plugins';
 
 /**
+ * Detect available package manager (bun preferred, npm fallback)
+ */
+function getPackageManager(): string {
+	if (process.env.BUN_INSTALL || process.argv[0]?.includes('bun')) {
+		return 'bun';
+	}
+
+	return 'npm';
+}
+
+/**
  * Plugin installer service
  */
 class PluginInstallerService {
@@ -83,7 +94,8 @@ class PluginInstallerService {
 					'Installing plugin dependencies...',
 				);
 				try {
-					execSync('bun install', {
+					const packageManager = getPackageManager();
+					execSync(`${packageManager} install`, {
 						cwd: targetDir,
 						stdio: 'pipe',
 						windowsHide: true,
@@ -181,7 +193,8 @@ class PluginInstallerService {
 			const packageJsonPath = join(targetDir, 'package.json');
 			if (existsSync(packageJsonPath)) {
 				try {
-					execSync('bun install', {
+					const packageManager = getPackageManager();
+					execSync(`${packageManager} install`, {
 						cwd: targetDir,
 						stdio: 'pipe',
 						windowsHide: true,

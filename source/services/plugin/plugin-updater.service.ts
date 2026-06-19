@@ -9,6 +9,17 @@ import {execSync} from 'node:child_process';
 const PLUGINS_DIR = join(CONFIG_DIR, 'plugins');
 
 /**
+ * Detect available package manager (bun preferred, npm fallback)
+ */
+function getPackageManager(): string {
+	if (process.env.BUN_INSTALL || process.argv[0]?.includes('bun')) {
+		return 'bun';
+	}
+
+	return 'npm';
+}
+
+/**
  * Plugin updater service
  */
 class PluginUpdaterService {
@@ -181,7 +192,8 @@ class PluginUpdaterService {
 			const packageJsonPath = join(pluginDir, 'package.json');
 			if (existsSync(packageJsonPath)) {
 				try {
-					execSync('bun install', {
+					const packageManager = getPackageManager();
+					execSync(`${packageManager} install`, {
 						cwd: pluginDir,
 						stdio: 'pipe',
 						windowsHide: true,

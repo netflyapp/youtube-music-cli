@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import type {Flags} from './types/cli.types.ts';
 import App from './app.tsx';
 import {render} from 'ink';

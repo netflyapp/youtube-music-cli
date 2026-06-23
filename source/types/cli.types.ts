@@ -26,4 +26,6 @@ export interface Flags {
 	webPort?: number;
 	webOnly?: boolean;
 	webAuth?: string;
+	// Windows immersive mode flag
+	win32?: boolean;
 }

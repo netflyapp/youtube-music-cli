@@ -81,6 +81,7 @@ const cli = meow(
 	  --repeat, -r         Repeat mode (off, all, one)
 	  --continue, -c       Resume last played track/playlist
 	  --headless           Run without TUI (just play)
+	  --win32              Windows immersive TUI mode with visualizer
 	  --web                Enable web UI server
 	  --web-host           Web server host (default: localhost)
 	  --web-port           Web server port (default: 8080)
@@ -154,6 +155,10 @@ const cli = meow(
 			},
 			name: {
 				type: 'string',
+			},
+			win32: {
+				type: 'boolean',
+				default: false,
 			},
 			help: {
 				type: 'boolean',
@@ -456,87 +461,155 @@ if (command === 'plugins') {
 	}
 
 	const flags = cli.flags as Flags;
-	const shouldRunDirectPlayback =
-		requiresImmediatePlayback(flags) &&
-		(flags.headless || !isInteractiveTerminal);
 
-	if (shouldRunDirectPlayback) {
+	// Check for immersive Windows mode
+	if (flags.win32 && process.platform === 'win32') {
 		void (async () => {
-			const dependencyCheck = await ensurePlaybackDependencies({
-				interactive: isInteractiveTerminal,
-			});
-			if (!dependencyCheck.ready) {
-				process.exit(1);
-				return;
-			}
-
 			try {
-				await runDirectPlaybackCommand(flags);
-				process.exit(0);
+				const {launchImmersiveMode} = await import('./immersive/index.ts');
+				launchImmersiveMode({
+					discoMode: false,
+					enableTray: true,
+					enableNotifications: true,
+				});
 			} catch (error) {
 				console.error(
-					`✗ Playback failed: ${error instanceof Error ? error.message : String(error)}`,
+					`Failed to start immersive mode: ${error instanceof Error ? error.message : String(error)}`,
 				);
 				process.exit(1);
 			}
 		})();
-	} else if (command === 'import') {
-		// Handle import commands
-		void (async () => {
-			const source = args[0];
-			const url = args[1];
+	} else {
+		const shouldRunDirectPlayback =
+			requiresImmediatePlayback(flags) &&
+			(flags.headless || !isInteractiveTerminal);
 
-			if (!source || !url) {
-				console.error(
-					'Usage: youtube-music-cli import <spotify|youtube> <url-or-id>',
-				);
-				process.exit(1);
-			}
-
-			if (source !== 'spotify' && source !== 'youtube') {
-				console.error('Invalid source. Use "spotify" or "youtube".');
-				process.exit(1);
-			}
-
-			const importService = getImportService();
-			const customName = cli.flags.name;
-
-			try {
-				console.log(`Importing ${source} playlist...`);
-				const result = await importService.importPlaylist(
-					source,
-					url,
-					customName,
-				);
-
-				console.log(`\n✓ Import completed!`);
-				console.log(`  Playlist: ${result.playlistName}`);
-				console.log(`  Matched: ${result.matched}/${result.total} tracks`);
-
-				if (result.errors.length > 0) {
-					console.log(`\nErrors:`);
-					for (const error of result.errors.slice(0, 10)) {
-						console.log(`  - ${error}`);
-					}
-					if (result.errors.length > 10) {
-						console.log(`  ... and ${result.errors.length - 10} more`);
-					}
+		if (shouldRunDirectPlayback) {
+			void (async () => {
+				const dependencyCheck = await ensurePlaybackDependencies({
+					interactive: isInteractiveTerminal,
+				});
+				if (!dependencyCheck.ready) {
+					process.exit(1);
+					return;
 				}
 
-				process.exit(0);
-			} catch (error) {
-				console.error(
-					`✗ Import failed: ${error instanceof Error ? error.message : String(error)}`,
-				);
-				process.exit(1);
-			}
-		})();
-	} else if (flags.web || flags.webOnly) {
-		// Handle web server flags
-		void (async () => {
-			const webManager = getWebServerManager();
+				try {
+					await runDirectPlaybackCommand(flags);
+					process.exit(0);
+				} catch (error) {
+					console.error(
+						`✗ Playback failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					process.exit(1);
+				}
+			})();
+		} else if (command === 'import') {
+			// Handle import commands
+			void (async () => {
+				const source = args[0];
+				const url = args[1];
 
-			try {
+				if (!source || !url) {
+					console.error(
+						'Usage: youtube-music-cli import <spotify|youtube> <url-or-id>',
+					);
+					process.exit(1);
+				}
+
+				if (source !== 'spotify' && source !== 'youtube') {
+					console.error('Invalid source. Use "spotify" or "youtube".');
+					process.exit(1);
+				}
+
+				const importService = getImportService();
+				const customName = cli.flags.name;
+
+				try {
+					console.log(`Importing ${source} playlist...`);
+					const result = await importService.importPlaylist(
+						source,
+						url,
+						customName,
+					);
+
+					console.log(`\n✓ Import completed!`);
+					console.log(`  Playlist: ${result.playlistName}`);
+					console.log(`  Matched: ${result.matched}/${result.total} tracks`);
+
+					if (result.errors.length > 0) {
+						console.log(`\nErrors:`);
+						for (const error of result.errors.slice(0, 10)) {
+							console.log(`  - ${error}`);
+						}
+						if (result.errors.length > 10) {
+							console.log(`  ... and ${result.errors.length - 10} more`);
+						}
+					}
+
+					process.exit(0);
+				} catch (error) {
+					console.error(
+						`✗ Import failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					process.exit(1);
+				}
+			})();
+		} else if (flags.web || flags.webOnly) {
+			// Handle web server flags
+			void (async () => {
+				const webManager = getWebServerManager();
+
+				try {
+					if (shouldCheckPlaybackDependencies(command, flags)) {
+						const dependencyCheck = await ensurePlaybackDependencies({
+							interactive: isInteractiveTerminal,
+						});
+						if (!dependencyCheck.ready && requiresImmediatePlayback(flags)) {
+							process.exit(1);
+							return;
+						}
+					}
+
+					await webManager.start({
+						enabled: true,
+						host: flags.webHost ?? 'localhost',
+						port: flags.webPort ?? 8080,
+						webOnly: flags.webOnly,
+						auth: flags.webAuth,
+					});
+
+					const serverUrl = webManager.getServerUrl();
+					console.log(`Web UI server running at: ${serverUrl}`);
+
+					// Set up import progress streaming
+					const streamingService = getWebStreamingService();
+					const importService = getImportService();
+					importService.onProgress(progress => {
+						streamingService.onImportProgress(progress);
+					});
+
+					// If web-only mode, just keep the server running
+					if (flags.webOnly) {
+						console.log('Running in web-only mode. Press Ctrl+C to exit.');
+						// Keep process alive
+						process.on('SIGINT', () => {
+							console.log('\nShutting down web server...');
+							void webManager.stop().then(() => process.exit(0));
+						});
+					} else {
+						// Also render the CLI UI
+						render(<App flags={flags} />);
+					}
+				} catch (error) {
+					console.error(
+						`Failed to start web server: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					process.exit(1);
+				}
+			})();
+		} else {
+			void (async () => {
 				if (shouldCheckPlaybackDependencies(command, flags)) {
 					const dependencyCheck = await ensurePlaybackDependencies({
 						interactive: isInteractiveTerminal,
@@ -547,78 +620,30 @@ if (command === 'plugins') {
 					}
 				}
 
-				await webManager.start({
-					enabled: true,
-					host: flags.webHost ?? 'localhost',
-					port: flags.webPort ?? 8080,
-					webOnly: flags.webOnly,
-					auth: flags.webAuth,
-				});
+				// Check for updates before rendering the app (skip in web-only mode)
+				if (!flags.webOnly) {
+					const versionCheck = getVersionCheckService();
+					const config = getConfigService();
+					const lastCheck = config.getLastVersionCheck();
 
-				const serverUrl = webManager.getServerUrl();
-				console.log(`Web UI server running at: ${serverUrl}`);
+					if (versionCheck.shouldCheck(lastCheck)) {
+						const result = await versionCheck.checkForUpdates(APP_VERSION);
+						config.setLastVersionCheck(versionCheck.markChecked());
 
-				// Set up import progress streaming
-				const streamingService = getWebStreamingService();
-				const importService = getImportService();
-				importService.onProgress(progress => {
-					streamingService.onImportProgress(progress);
-				});
-
-				// If web-only mode, just keep the server running
-				if (flags.webOnly) {
-					console.log('Running in web-only mode. Press Ctrl+C to exit.');
-					// Keep process alive
-					process.on('SIGINT', () => {
-						console.log('\nShutting down web server...');
-						void webManager.stop().then(() => process.exit(0));
-					});
-				} else {
-					// Also render the CLI UI
-					render(<App flags={flags} />);
-				}
-			} catch (error) {
-				console.error(
-					`Failed to start web server: ${error instanceof Error ? error.message : String(error)}`,
-				);
-				process.exit(1);
-			}
-		})();
-	} else {
-		void (async () => {
-			if (shouldCheckPlaybackDependencies(command, flags)) {
-				const dependencyCheck = await ensurePlaybackDependencies({
-					interactive: isInteractiveTerminal,
-				});
-				if (!dependencyCheck.ready && requiresImmediatePlayback(flags)) {
-					process.exit(1);
-					return;
-				}
-			}
-
-			// Check for updates before rendering the app (skip in web-only mode)
-			if (!flags.webOnly) {
-				const versionCheck = getVersionCheckService();
-				const config = getConfigService();
-				const lastCheck = config.getLastVersionCheck();
-
-				if (versionCheck.shouldCheck(lastCheck)) {
-					const result = await versionCheck.checkForUpdates(APP_VERSION);
-					config.setLastVersionCheck(versionCheck.markChecked());
-
-					if (result.hasUpdate) {
-						console.log('');
-						console.log(
-							` Update available: ${APP_VERSION} → ${result.latestVersion}`,
-						);
-						console.log('Run: npm install -g @involvex/youtube-music-cli');
-						console.log('');
+						if (result.hasUpdate) {
+							console.log('');
+							console.log(
+								` Update available: ${APP_VERSION} → ${result.latestVersion}`,
+							);
+							console.log('Run: npm install -g @involvex/youtube-music-cli');
+							console.log('');
+						}
 					}
 				}
-			}
 
-			// Render the app
-			render(<App flags={flags} />);
-		})();
+				// Render the app
+				render(<App flags={flags} />);
+			})();
+		}
 	}
 }

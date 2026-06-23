@@ -5,6 +5,10 @@
     "": {
       "name": "youtube-music-cli",
       "dependencies": {
+        "@bun-win32/combase": "^1.1.0",
+        "@bun-win32/kernel32": "^1.0.26",
+        "@bun-win32/shell32": "^1.0.8",
+        "@bun-win32/user32": "^3.0.22",
         "@distube/ytdl-core": "^4.16.12",
         "ansi-escapes": "^7.3.0",
         "discord-rpc": "^4.0.1",
@@ -67,8 +71,8 @@
     },
   },
   "patchedDependencies": {
-    "whatwg-url@5.0.0": "patches/whatwg-url@5.0.0.patch",
     "tr46@0.0.3": "patches/tr46@0.0.3.patch",
+    "whatwg-url@5.0.0": "patches/whatwg-url@5.0.0.patch",
   },
   "overrides": {
     "minimatch": "^10.2.1",
@@ -109,6 +113,16 @@
     "@babel/types": ["@babel/types@7.29.0", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A=="],
 
     "@bufbuild/protobuf": ["@bufbuild/protobuf@2.11.0", "", {}, "sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ=="],
+
+    "@bun-win32/combase": ["@bun-win32/combase@1.1.0", "", { "dependencies": { "@bun-win32/core": "1.1.4" }, "peerDependencies": { "typescript": "^5" } }, "sha512-R2zq6SW/4wU5iIkX7lcS6IoMY+DFkHOVjIoC5fOm9nBfg9jdMg9AnTNxj3McX/5FEuMKJ0XVYd3t+3n2Bw53wg=="],
+
+    "@bun-win32/core": ["@bun-win32/core@1.1.4", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-7Jo87K1K3nCzkc0o7rbVJoyEbOZr0WJuB/MkrzX218q6Obbgi2UG40sFTf3W3ssxwHXnGDNo5DTH73LK27VoBw=="],
+
+    "@bun-win32/kernel32": ["@bun-win32/kernel32@1.0.26", "", { "dependencies": { "@bun-win32/core": "1.1.4" }, "peerDependencies": { "typescript": "^5" } }, "sha512-vmEUPRQkDt1O30fsQHGt/+umcaKly5sLhxaJClgwbNsMPifN94ODkPrEnnJMqCYl79p7U4M4oKBxwI43cl0fPw=="],
+
+    "@bun-win32/shell32": ["@bun-win32/shell32@1.0.8", "", { "dependencies": { "@bun-win32/core": "1.1.4" }, "peerDependencies": { "typescript": "^5" } }, "sha512-tHajmTHsaCpe8x/p5BSrLA+CGMWExBb92sa9js0bFafr1T/sXdtmE3sOL+mzjwrgBjmQz5ivjzBkKN5fKdbSvw=="],
+
+    "@bun-win32/user32": ["@bun-win32/user32@3.0.22", "", { "dependencies": { "@bun-win32/core": "1.1.4" }, "peerDependencies": { "typescript": "^5" } }, "sha512-fEgyMqsGu7lBEa/ew5CNO1HLdKKrcIwvrVTZUCxvFT9V6meTgD5OZXhOYjiCzdd+IhYn//q73yD4xqN7K88Uxg=="],
 
     "@conventional-changelog/git-client": ["@conventional-changelog/git-client@1.0.1", "", { "dependencies": { "@types/semver": "^7.5.5", "semver": "^7.5.2" }, "peerDependencies": { "conventional-commits-filter": "^5.0.0", "conventional-commits-parser": "^6.0.0" }, "optionalPeers": ["conventional-commits-filter", "conventional-commits-parser"] }, "sha512-PJEqBwAleffCMETaVm/fUgHldzBE35JFk3/9LL6NUA5EXa3qednu+UT6M7E5iBu3zIQZCULYIiZ90fBYHt6xUw=="],
 

@@ -1,8 +1,12 @@
-## [0.0.81](https://github.com/involvex/youtube-music-cli/compare/v0.0.80...v0.0.81) (2026-06-20)
+## [0.0.82](https://github.com/involvex/youtube-music-cli/compare/v0.0.80...v0.0.82) (2026-06-23)
 
 ### Bug Fixes
 
-- replace jiti with native ESM import for plugin loading ([d6f1053](https://github.com/involvex/youtube-music-cli/commit/d6f1053d869342487f95d233111694e9677446a5))
+- replace jiti with native ESM import for plugin loading ([3a07e7e](https://github.com/involvex/youtube-music-cli/commit/3a07e7eb1cee50ee3b41195fc064b5705930ecc0))
+
+### Features
+
+- **immersive:** add Windows immersive TUI mode with visualizer and disco effects ([31ca503](https://github.com/involvex/youtube-music-cli/commit/31ca5039b3392807be84515614c48db89168be50)), closes [hi#DPI](https://github.com/hi/issues/DPI)
 
 ## [0.0.80](https://github.com/involvex/youtube-music-cli/compare/v0.0.79...v0.0.80) (2026-06-19)
 

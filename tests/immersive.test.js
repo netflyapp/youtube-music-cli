@@ -129,26 +129,115 @@ test('layout helpers compute regions and progress bars', async t => {
 	t.is(vol.length, 8);
 });
 
-test('search overlay handles submit and cancel', async t => {
+test('search overlay handles query and results phases', async t => {
 	const {
 		closeSearchOverlay,
 		createSearchOverlayState,
-		handleSearchInput,
+		handleSearchQueryInput,
+		handleSearchResultsInput,
 		openSearchOverlay,
+		setSearchResults,
 	} = await import('../source/immersive/ui/search-overlay.ts');
 
 	const overlay = createSearchOverlayState();
 	openSearchOverlay(overlay);
 	t.true(overlay.active);
+	t.is(overlay.phase, 'query');
 
-	t.is(handleSearchInput(overlay, 't'), 'none');
-	t.is(handleSearchInput(overlay, 'e'), 'none');
-	t.is(handleSearchInput(overlay, 's'), 'none');
-	t.is(handleSearchInput(overlay, 't'), 'none');
+	t.is(handleSearchQueryInput(overlay, 't'), 'none');
+	t.is(handleSearchQueryInput(overlay, 'e'), 'none');
+	t.is(handleSearchQueryInput(overlay, 's'), 'none');
+	t.is(handleSearchQueryInput(overlay, 't'), 'none');
 	t.is(overlay.query, 'test');
-	t.is(handleSearchInput(overlay, 'enter'), 'submit');
+	t.is(handleSearchQueryInput(overlay, 'enter'), 'submit');
+
+	setSearchResults(overlay, [
+		{type: 'song', data: {videoId: 'a', title: 'Alpha', artists: []}},
+		{type: 'album', data: {albumId: 'b', name: 'Beta', artists: []}},
+	]);
+	t.is(overlay.phase, 'results');
+	t.is(overlay.selectedIndex, 0);
+
+	t.is(handleSearchResultsInput(overlay, 'down'), 'none');
+	t.is(overlay.selectedIndex, 1);
+	t.is(handleSearchResultsInput(overlay, 'enter'), 'play');
+	t.is(handleSearchResultsInput(overlay, 'm'), 'mix');
+	t.is(handleSearchResultsInput(overlay, 'f'), 'favorite');
+
+	t.is(handleSearchResultsInput(overlay, 'escape'), 'back');
+	t.is(overlay.phase, 'query');
 
 	closeSearchOverlay(overlay);
 	t.false(overlay.active);
-	t.is(handleSearchInput(overlay, 'escape'), 'cancel');
+	t.is(handleSearchQueryInput(overlay, 'escape'), 'cancel');
+});
+
+test('library overlay navigates menu and playlists', async t => {
+	const {
+		closeLibraryOverlay,
+		createLibraryOverlayState,
+		handleLibraryMenuInput,
+		handleLibraryPlaylistInput,
+		openLibraryMenu,
+		openPlaylistPicker,
+	} = await import('../source/immersive/ui/library-overlay.ts');
+
+	const overlay = createLibraryOverlayState();
+	openLibraryMenu(overlay);
+	t.true(overlay.active);
+	t.is(overlay.view, 'menu');
+
+	t.is(handleLibraryMenuInput(overlay, 'down'), 'none');
+	t.is(overlay.selectedIndex, 1);
+	t.is(handleLibraryMenuInput(overlay, 'enter'), 'menu_select');
+
+	openPlaylistPicker(overlay);
+	t.is(overlay.view, 'playlists');
+	t.is(handleLibraryPlaylistInput(overlay, 'down', 3), 'none');
+	t.is(overlay.selectedIndex, 1);
+	t.is(handleLibraryPlaylistInput(overlay, 'escape', 3), 'back_to_menu');
+	t.is(overlay.view, 'menu');
+
+	closeLibraryOverlay(overlay);
+	t.false(overlay.active);
+});
+
+test('playback-actions dedupe tracks and favorites manager toggles', async t => {
+	const {dedupeTracks, FavoritesManager} =
+		await import('../source/immersive/actions/playback-actions.ts');
+
+	const deduped = dedupeTracks([
+		{videoId: 'a', title: 'A', artists: []},
+		{videoId: 'a', title: 'A duplicate', artists: []},
+		{videoId: 'b', title: 'B', artists: []},
+	]);
+	t.is(deduped.length, 2);
+
+	const manager = new FavoritesManager();
+	manager['tracks'] = [];
+	manager['loaded'] = true;
+
+	const track = {videoId: 'x', title: 'Song', artists: []};
+	t.false(manager.isFavorite('x'));
+	const added = await manager.toggle(track);
+	t.true(added);
+	t.true(manager.isFavorite('x'));
+	const removed = await manager.toggle(track);
+	t.false(removed);
+	t.false(manager.isFavorite('x'));
+});
+
+test('getSearchResultLabel and prefix format results', async t => {
+	const {getSearchResultLabel, getSearchResultPrefix} =
+		await import('../source/immersive/actions/playback-actions.ts');
+
+	t.is(getSearchResultPrefix('song'), '♪');
+	t.is(getSearchResultPrefix('album'), '◎');
+	t.is(
+		getSearchResultLabel({
+			type: 'song',
+			data: {videoId: '1', title: 'Hello', artists: []},
+		}),
+		'Hello',
+	);
 });

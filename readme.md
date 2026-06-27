@@ -207,15 +207,23 @@ dist/ymc-win32.exe
 
 **Hotkeys in Immersive Mode:**
 
-| Key        | Action              |
-| ---------- | ------------------- |
-| `/` or `S` | Open search overlay |
-| `Space`    | Play / Pause        |
-| `D`        | Toggle disco mode   |
-| `↑` / `↓`  | Volume up / down    |
-| `←` / `→`  | Previous / Next     |
-| `Q`        | Quit immersive mode |
-| `Ctrl+C`   | Force quit          |
+| Key        | Action                                       |
+| ---------- | -------------------------------------------- |
+| `/` or `S` | Open search overlay                          |
+| `Space`    | Play / Pause                                 |
+| `F`        | Toggle favorite (current track or search)    |
+| `L`        | Library menu (playlists, favorites)          |
+| `P`        | Open saved playlist picker                   |
+| `E`        | Play all favorites                           |
+| `R`        | Play random favorite                         |
+| `M`        | Create mix from search result (results view) |
+| `D`        | Toggle disco mode                            |
+| `↑` / `↓`  | Volume up / down (player) or navigate lists  |
+| `←` / `→`  | Previous / Next track                        |
+| `Enter`    | Select / play (overlays)                     |
+| `Esc`      | Back / close overlay                         |
+| `Q`        | Quit immersive mode                          |
+| `Ctrl+C`   | Force quit                                   |
 
 Global media keys (Alt+Media keys) also work when the terminal is unfocused on Windows with Bun runtime.
 

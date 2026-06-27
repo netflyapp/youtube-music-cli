@@ -16,17 +16,34 @@ import {
 	enableDpiAwareness,
 	onTerminalResize,
 } from './native/console.ts';
-import {createTrayIcon, removeTrayIcon, updateTrayIcon} from './native/tray.ts';
+import {createTrayIcon, removeTrayIcon} from './native/tray.ts';
 import type {RGB} from './renderer/ansi-codes.ts';
-import type {Track} from '../types/youtube-music.types.ts';
+import type {Playlist, SearchResult} from '../types/youtube-music.types.ts';
 import {parseKeyName} from './input/key-parser.ts';
+import {
+	getSearchResultLabel,
+	getSearchResultPrefix,
+} from './actions/playback-actions.ts';
 import {
 	closeSearchOverlay,
 	createSearchOverlayState,
-	handleSearchInput,
+	handleSearchQueryInput,
+	handleSearchResultsInput,
 	openSearchOverlay,
+	setSearchResults,
 	type SearchOverlayState,
 } from './ui/search-overlay.ts';
+import {
+	closeLibraryOverlay,
+	createLibraryOverlayState,
+	formatPlaylistLine,
+	handleLibraryMenuInput,
+	handleLibraryPlaylistInput,
+	LIBRARY_MENU_ITEMS,
+	openLibraryMenu,
+	openPlaylistPicker,
+	type LibraryOverlayState,
+} from './ui/library-overlay.ts';
 import {
 	getUpcomingTracks,
 	trackArtists,
@@ -54,17 +71,26 @@ export interface ImmersiveOptions {
 		artwork?: string;
 	};
 	getState?: () => ImmersivePlayerState;
+	isFavorite?: (videoId: string) => boolean;
 	onTogglePlay?: () => void;
 	onToggleDisco?: () => void;
 	onVolumeUp?: () => void;
 	onVolumeDown?: () => void;
 	onNext?: () => void;
 	onPrevious?: () => void;
+	onToggleFavoriteCurrent?: () => void | Promise<void>;
 	onSearch?: (
 		query: string,
-	) => Promise<{tracks: Track[]; message: string | null}>;
-	onSearchPlay?: (tracks: Track[]) => Promise<void>;
-	onAddToQueue?: (track: Track) => void;
+	) => Promise<{results: SearchResult[]; message: string | null}>;
+	onPlaySearchResult?: (result: SearchResult) => Promise<void>;
+	onCreateMix?: (result: SearchResult) => Promise<string | null>;
+	onToggleFavoriteSearchResult?: (
+		result: SearchResult,
+	) => Promise<string | null>;
+	getSavedPlaylists?: () => Playlist[];
+	onPlaySavedPlaylist?: (playlist: Playlist) => Promise<void>;
+	onPlayAllFavorites?: () => Promise<string | null>;
+	onPlayRandomFavorite?: () => Promise<string | null>;
 }
 
 export class ImmersiveEngine {
@@ -76,7 +102,7 @@ export class ImmersiveEngine {
 	private discoEngine: DiscoEngine | null = null;
 	private particleSystem: DiscoParticleSystem | null = null;
 	private searchOverlay: SearchOverlayState = createSearchOverlayState();
-	private lastSearchResults: Track[] = [];
+	private libraryOverlay: LibraryOverlayState = createLibraryOverlayState();
 
 	private options: ImmersiveOptions;
 	private effectiveWidth: number;
@@ -248,10 +274,23 @@ export class ImmersiveEngine {
 				intensity,
 				playerState?.isPlaying ?? false,
 			);
-			renderNowPlaying(fb, layout, playerState, accentColor);
+			renderNowPlaying(
+				fb,
+				layout,
+				playerState,
+				accentColor,
+				this.options.isFavorite,
+			);
 			renderQueuePanel(fb, layout, playerState, accentColor);
-			renderControls(fb, tw, th, this.searchOverlay.active);
+			renderControls(fb, tw, th, this.searchOverlay, this.libraryOverlay);
 			renderSearchOverlay(fb, tw, th, this.searchOverlay);
+			renderLibraryOverlay(
+				fb,
+				tw,
+				th,
+				this.libraryOverlay,
+				this.options.getSavedPlaylists?.() ?? [],
+			);
 
 			const isDisco =
 				playerState?.isDiscoMode ?? this.options.discoMode ?? false;
@@ -334,6 +373,11 @@ export class ImmersiveEngine {
 				return;
 			}
 
+			if (this.libraryOverlay.active) {
+				void this.handleLibraryKey(keyName);
+				return;
+			}
+
 			if (keyName === 'Ctrl+C') {
 				this.stop();
 				process.exit(0);
@@ -346,6 +390,23 @@ export class ImmersiveEngine {
 					break;
 				case 'd':
 					this.options.onToggleDisco?.();
+					break;
+				case 'f':
+					void this.options.onToggleFavoriteCurrent?.();
+					break;
+				case 'l':
+					openLibraryMenu(this.libraryOverlay);
+					break;
+				case 'p':
+					openPlaylistPicker(this.libraryOverlay);
+					break;
+				case 'e':
+					void this.runLibraryAction(() => this.options.onPlayAllFavorites?.());
+					break;
+				case 'r':
+					void this.runLibraryAction(() =>
+						this.options.onPlayRandomFavorite?.(),
+					);
 					break;
 				case 'up':
 					this.options.onVolumeUp?.();
@@ -362,11 +423,6 @@ export class ImmersiveEngine {
 				case '/':
 				case 's':
 					openSearchOverlay(this.searchOverlay);
-					break;
-				case 'a':
-					if (this.lastSearchResults[0]) {
-						this.options.onAddToQueue?.(this.lastSearchResults[0]);
-					}
 					break;
 				case 'q':
 				case 'escape':
@@ -386,41 +442,167 @@ export class ImmersiveEngine {
 		}
 	}
 
-	private async handleSearchKey(key: string): Promise<void> {
-		const action = handleSearchInput(this.searchOverlay, key);
-		if (action === 'cancel') {
-			return;
-		}
-
-		if (action !== 'submit' || !this.options.onSearch) {
-			return;
-		}
-
-		const query = this.searchOverlay.query.trim();
-		this.searchOverlay.status = 'Searching...';
-
+	private async runLibraryAction(
+		action: () => Promise<string | null | undefined> | undefined,
+	): Promise<void> {
 		try {
-			const result = await this.options.onSearch(query);
-			this.lastSearchResults = result.tracks;
+			const message = await action();
+			if (message) {
+				this.libraryOverlay.status = message;
+				openLibraryMenu(this.libraryOverlay);
+				return;
+			}
+			closeLibraryOverlay(this.libraryOverlay);
+		} catch (error) {
+			this.libraryOverlay.status =
+				error instanceof Error ? error.message : 'Action failed';
+			openLibraryMenu(this.libraryOverlay);
+		}
+	}
 
-			if (result.tracks.length === 0) {
-				this.searchOverlay.status = result.message ?? 'No tracks found';
+	private async handleLibraryKey(key: string): Promise<void> {
+		if (this.libraryOverlay.view === 'menu') {
+			const action = handleLibraryMenuInput(this.libraryOverlay, key);
+			if (action === 'close') {
+				return;
+			}
+			if (action !== 'menu_select') {
 				return;
 			}
 
-			if (this.options.onSearchPlay) {
-				await this.options.onSearchPlay(result.tracks);
+			switch (this.libraryOverlay.selectedIndex) {
+				case 0:
+					this.libraryOverlay.view = 'playlists';
+					this.libraryOverlay.selectedIndex = 0;
+					this.libraryOverlay.status = null;
+					break;
+				case 1:
+					await this.runLibraryAction(() =>
+						this.options.onPlayAllFavorites?.(),
+					);
+					break;
+				case 2:
+					await this.runLibraryAction(() =>
+						this.options.onPlayRandomFavorite?.(),
+					);
+					break;
+				case 3:
+					closeLibraryOverlay(this.libraryOverlay);
+					break;
 			}
+			return;
+		}
 
-			const track = result.tracks[0];
-			if (track && this.options.enableTray) {
-				updateTrayIcon(`${track.title} - ${trackArtists(track)}`);
-			}
+		const playlists = this.options.getSavedPlaylists?.() ?? [];
+		const action = handleLibraryPlaylistInput(
+			this.libraryOverlay,
+			key,
+			playlists.length,
+		);
 
-			closeSearchOverlay(this.searchOverlay);
+		if (action === 'back_to_menu') {
+			return;
+		}
+
+		if (action !== 'play_playlist') {
+			return;
+		}
+
+		const playlist = playlists[this.libraryOverlay.selectedIndex];
+		if (!playlist) {
+			this.libraryOverlay.status = 'No saved playlists';
+			return;
+		}
+
+		try {
+			await this.options.onPlaySavedPlaylist?.(playlist);
+			closeLibraryOverlay(this.libraryOverlay);
 		} catch (error) {
-			this.searchOverlay.status =
-				error instanceof Error ? error.message : 'Search failed';
+			this.libraryOverlay.status =
+				error instanceof Error ? error.message : 'Failed to play playlist';
+		}
+	}
+
+	private async handleSearchKey(key: string): Promise<void> {
+		if (this.searchOverlay.phase === 'query') {
+			const action = handleSearchQueryInput(this.searchOverlay, key);
+			if (action === 'cancel') {
+				return;
+			}
+			if (action !== 'submit' || !this.options.onSearch) {
+				return;
+			}
+
+			const query = this.searchOverlay.query.trim();
+			this.searchOverlay.status = 'Searching...';
+
+			try {
+				const result = await this.options.onSearch(query);
+				if (result.results.length === 0) {
+					this.searchOverlay.status = result.message ?? 'No results found';
+					return;
+				}
+				setSearchResults(this.searchOverlay, result.results);
+			} catch (error) {
+				this.searchOverlay.status =
+					error instanceof Error ? error.message : 'Search failed';
+			}
+			return;
+		}
+
+		const action = handleSearchResultsInput(this.searchOverlay, key);
+		const selected =
+			this.searchOverlay.results[this.searchOverlay.selectedIndex];
+		if (!selected && action !== 'back' && action !== 'none') {
+			return;
+		}
+
+		if (action === 'back') {
+			return;
+		}
+
+		if (action === 'none') {
+			return;
+		}
+
+		if (action === 'favorite' && selected) {
+			try {
+				const message =
+					await this.options.onToggleFavoriteSearchResult?.(selected);
+				if (message) {
+					this.searchOverlay.status = message;
+				}
+			} catch (error) {
+				this.searchOverlay.status =
+					error instanceof Error ? error.message : 'Favorite failed';
+			}
+			return;
+		}
+
+		if (action === 'mix' && selected) {
+			this.searchOverlay.status = 'Creating mix...';
+			try {
+				const message = await this.options.onCreateMix?.(selected);
+				if (message?.startsWith('Mix "')) {
+					closeSearchOverlay(this.searchOverlay);
+					return;
+				}
+				this.searchOverlay.status = message ?? 'Mix failed';
+			} catch (error) {
+				this.searchOverlay.status =
+					error instanceof Error ? error.message : 'Mix failed';
+			}
+			return;
+		}
+
+		if (action === 'play' && selected) {
+			try {
+				await this.options.onPlaySearchResult?.(selected);
+				closeSearchOverlay(this.searchOverlay);
+			} catch (error) {
+				this.searchOverlay.status =
+					error instanceof Error ? error.message : 'Playback failed';
+			}
 		}
 	}
 
@@ -613,6 +795,7 @@ function renderNowPlaying(
 	layout: ImmersiveLayout,
 	state: ImmersivePlayerState | undefined,
 	accent: RGB,
+	isFavorite?: (videoId: string) => boolean,
 ): void {
 	fb.drawRect(
 		layout.nowPlayingX,
@@ -634,7 +817,10 @@ function renderNowPlaying(
 	}
 
 	const maxTextW = layout.nowPlayingW - 4;
-	const title = truncateText(state.currentTrack.title, maxTextW);
+	const favorited =
+		state.currentTrack && isFavorite?.(state.currentTrack.videoId);
+	const heart = favorited ? '♥ ' : '';
+	const title = truncateText(`${heart}${state.currentTrack.title}`, maxTextW);
 	const artist = truncateText(trackArtists(state.currentTrack), maxTextW);
 
 	fb.setText(innerX, y, 'NOW PLAYING', accent, null, {dim: true});
@@ -718,7 +904,8 @@ function renderControls(
 	fb: FrameBuffer,
 	width: number,
 	height: number,
-	searchActive: boolean,
+	searchOverlay: SearchOverlayState,
+	libraryOverlay: LibraryOverlayState,
 ): void {
 	const separatorY = height - 3;
 	fb.setText(1, separatorY, '─'.repeat(Math.max(0, width - 2)), null, null, {
@@ -726,9 +913,22 @@ function renderControls(
 	});
 
 	const controlsY = height - 2;
-	const controls = searchActive
-		? '[Enter] Search   [Esc] Cancel   [Backspace] Delete'
-		: '[←→] Track   [Space] Play/Pause   [↑↓] Volume   [D] Disco   [/] Search   [Q] Quit';
+	let controls: string;
+
+	if (searchOverlay.active) {
+		controls =
+			searchOverlay.phase === 'query'
+				? '[Enter] Search   [Esc] Cancel   [Backspace] Delete'
+				: '[↑↓] Select   [Enter] Play   [M] Mix   [F] Favorite   [Esc] Back';
+	} else if (libraryOverlay.active) {
+		controls =
+			libraryOverlay.view === 'menu'
+				? '[↑↓] Navigate   [Enter] Select   [Esc] Close'
+				: '[↑↓] Select playlist   [Enter] Play   [Esc] Back';
+	} else {
+		controls =
+			'[←→] Track   [Space] Play   [F] Favorite   [L] Library   [P] Playlists   [E] Favorites   [R] Random   [/] Search   [D] Disco   [Q] Quit';
+	}
 
 	const x = Math.max(2, Math.floor((width - controls.length) / 2));
 	fb.setText(x, controlsY, truncateText(controls, width - 4), null, null, {
@@ -746,22 +946,148 @@ function renderSearchOverlay(
 		return;
 	}
 
-	const boxY = height - 6;
-	const prompt = `Search: ${overlay.query}_`;
-	fb.setText(2, boxY, truncateText(prompt, width - 4), null, null, {
-		bold: true,
-	});
+	const boxH = Math.min(Math.max(8, Math.floor(height * 0.45)), height - 6);
+	const boxY = Math.max(2, Math.floor((height - boxH) / 2));
+	const boxW = Math.min(width - 4, 72);
+	const boxX = Math.floor((width - boxW) / 2);
+
+	fb.drawRect(boxX, boxY, boxW, boxH, null, null, 'single');
+	fb.setText(boxX + 2, boxY, ' SEARCH ', null, null, {bold: true});
+
+	if (overlay.phase === 'query') {
+		const prompt = `Query: ${overlay.query}_`;
+		fb.setText(boxX + 2, boxY + 2, truncateText(prompt, boxW - 4), null, null);
+		if (overlay.status) {
+			fb.setText(
+				boxX + 2,
+				boxY + 3,
+				truncateText(overlay.status, boxW - 4),
+				null,
+				null,
+				{dim: true},
+			);
+		}
+		return;
+	}
+
+	const listTop = boxY + 2;
+	const maxLines = boxH - 4;
+	const start = Math.max(
+		0,
+		Math.min(
+			overlay.selectedIndex - Math.floor(maxLines / 2),
+			Math.max(0, overlay.results.length - maxLines),
+		),
+	);
+	const visible = overlay.results.slice(start, start + maxLines);
+
+	for (let i = 0; i < visible.length; i++) {
+		const result = visible[i];
+		if (!result) continue;
+		const index = start + i;
+		const prefix = getSearchResultPrefix(result.type);
+		const label = getSearchResultLabel(result);
+		const marker = index === overlay.selectedIndex ? '>' : ' ';
+		const line = truncateText(`${marker} ${prefix} ${label}`, boxW - 4);
+		fb.setText(
+			boxX + 2,
+			listTop + i,
+			line,
+			null,
+			null,
+			index === overlay.selectedIndex ? {bold: true} : {dim: true},
+		);
+	}
 
 	if (overlay.status) {
 		fb.setText(
-			2,
-			boxY + 1,
-			truncateText(overlay.status, width - 4),
+			boxX + 2,
+			boxY + boxH - 2,
+			truncateText(overlay.status, boxW - 4),
 			null,
 			null,
-			{
+			{dim: true},
+		);
+	}
+}
+
+function renderLibraryOverlay(
+	fb: FrameBuffer,
+	width: number,
+	height: number,
+	overlay: LibraryOverlayState,
+	playlists: Playlist[],
+): void {
+	if (!overlay.active) {
+		return;
+	}
+
+	const boxH = Math.min(Math.max(8, Math.floor(height * 0.4)), height - 6);
+	const boxY = Math.max(2, Math.floor((height - boxH) / 2));
+	const boxW = Math.min(width - 4, 60);
+	const boxX = Math.floor((width - boxW) / 2);
+
+	fb.drawRect(boxX, boxY, boxW, boxH, null, null, 'single');
+
+	if (overlay.view === 'menu') {
+		fb.setText(boxX + 2, boxY, ' LIBRARY ', null, null, {bold: true});
+		for (let i = 0; i < LIBRARY_MENU_ITEMS.length; i++) {
+			const item = LIBRARY_MENU_ITEMS[i]!;
+			const marker = i === overlay.selectedIndex ? '>' : ' ';
+			fb.setText(
+				boxX + 2,
+				boxY + 2 + i,
+				truncateText(`${marker} ${item}`, boxW - 4),
+				null,
+				null,
+				i === overlay.selectedIndex ? {bold: true} : {dim: true},
+			);
+		}
+	} else {
+		fb.setText(boxX + 2, boxY, ' PLAYLISTS ', null, null, {bold: true});
+		if (playlists.length === 0) {
+			fb.setText(boxX + 2, boxY + 2, 'No saved playlists', null, null, {
 				dim: true,
-			},
+			});
+		} else {
+			const maxLines = boxH - 4;
+			const start = Math.max(
+				0,
+				Math.min(
+					overlay.selectedIndex - Math.floor(maxLines / 2),
+					Math.max(0, playlists.length - maxLines),
+				),
+			);
+			const visible = playlists.slice(start, start + maxLines);
+			for (let i = 0; i < visible.length; i++) {
+				const playlist = visible[i];
+				if (!playlist) continue;
+				const index = start + i;
+				const marker = index === overlay.selectedIndex ? '>' : ' ';
+				const line = truncateText(
+					`${marker} ${formatPlaylistLine(playlist, boxW - 8)}`,
+					boxW - 4,
+				);
+				fb.setText(
+					boxX + 2,
+					boxY + 2 + i,
+					line,
+					null,
+					null,
+					index === overlay.selectedIndex ? {bold: true} : {dim: true},
+				);
+			}
+		}
+	}
+
+	if (overlay.status) {
+		fb.setText(
+			boxX + 2,
+			boxY + boxH - 2,
+			truncateText(overlay.status, boxW - 4),
+			null,
+			null,
+			{dim: true},
 		);
 	}
 }

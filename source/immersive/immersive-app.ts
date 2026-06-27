@@ -1,6 +1,10 @@
 import process from 'node:process';
 import type {Flags} from '../types/cli.types.ts';
-import type {Track} from '../types/youtube-music.types.ts';
+import type {
+	Playlist,
+	SearchResult,
+	Track,
+} from '../types/youtube-music.types.ts';
 import {getConfigService} from '../services/config/config.service.ts';
 import {getMusicService} from '../services/youtube-music/api.ts';
 import {getPlayerService} from '../services/player/player.service.ts';
@@ -8,7 +12,12 @@ import {ensurePlaybackDependencies} from '../services/player/dependency-check.se
 import {loadPlayerState} from '../services/player-state/player-state.service.ts';
 import {ImmersiveEngine} from './immersive-engine.ts';
 import {
-	addToQueue,
+	createMixFromResult,
+	FavoritesManager,
+	loadPlaylists,
+	playSearchResult,
+} from './actions/playback-actions.ts';
+import {
 	advanceQueue,
 	createInitialImmersiveState,
 	previousQueue,
@@ -170,6 +179,10 @@ async function playTrackAtIndex(
 		await playerService.play(trackUrl, getPlaybackOptions(state.volume));
 	}
 
+	if (track.duration) {
+		state.duration = track.duration;
+	}
+
 	const title = track.title;
 	const artist = trackArtists(track);
 	updateTrayIcon(`${title} - ${artist}`);
@@ -192,6 +205,8 @@ export async function startImmersiveApp(
 	const config = getConfigService();
 	const playerService = getPlayerService();
 	const musicService = getMusicService();
+	const favoritesManager = new FavoritesManager();
+	await favoritesManager.ensureLoaded();
 	const discoMode = options.discoMode ?? process.env.DISCO_MODE === 'true';
 
 	const initialVolume = options.flags?.volume ?? config.get('volume');
@@ -220,6 +235,12 @@ export async function startImmersiveApp(
 
 	let engine: ImmersiveEngine | null = null;
 	let eofTimestamp = 0;
+
+	const queueAndPlay = async (nextTracks: Track[]): Promise<void> => {
+		if (nextTracks.length === 0) return;
+		setQueue(state, nextTracks);
+		await playTrackAtIndex(state, 0);
+	};
 
 	const playCurrent = async (): Promise<void> => {
 		if (!state.currentTrack) {
@@ -309,6 +330,7 @@ export async function startImmersiveApp(
 		enableTray: true,
 		enableNotifications: true,
 		getState: () => state,
+		isFavorite: videoId => favoritesManager.isFavorite(videoId),
 		onTogglePlay: () => {
 			void togglePlayback();
 		},
@@ -330,27 +352,69 @@ export async function startImmersiveApp(
 		onPrevious: () => {
 			void handlePrevious();
 		},
+		onToggleFavoriteCurrent: async () => {
+			if (!state.currentTrack) return;
+			const added = await favoritesManager.toggle(state.currentTrack);
+			showTrackChangeToast(
+				state.currentTrack.title,
+				added ? 'Added to favorites' : 'Removed from favorites',
+			);
+		},
 		onSearch: async query => {
 			const response = await musicService.search(query, {
-				type: 'songs',
-				limit: 10,
+				type: 'all',
+				limit: 15,
 			});
-			const results = response.results
-				.filter(result => result.type === 'song')
-				.map(result => result.data as Track);
-
-			if (results.length === 0) {
-				return {tracks: [], message: 'No tracks found'};
+			if (response.results.length === 0) {
+				return {results: [], message: 'No results found'};
 			}
-
-			return {tracks: results, message: null};
+			return {results: response.results, message: null};
 		},
-		onSearchPlay: async tracks => {
-			setQueue(state, tracks);
-			await playTrackAtIndex(state, 0);
+		onPlaySearchResult: async (result: SearchResult) => {
+			const outcome = await playSearchResult(result, musicService);
+			if (!outcome.ok) {
+				throw new Error(outcome.message);
+			}
+			await queueAndPlay(outcome.tracks);
 		},
-		onAddToQueue: track => {
-			addToQueue(state, track);
+		onCreateMix: async (result: SearchResult) => {
+			const outcome = await createMixFromResult(result, musicService);
+			if (!outcome.ok) {
+				return outcome.message;
+			}
+			await queueAndPlay(outcome.tracks);
+			return `Mix "${outcome.playlistName}" (${outcome.tracks.length} tracks)`;
+		},
+		onToggleFavoriteSearchResult: async (result: SearchResult) => {
+			if (result.type !== 'song') {
+				return 'Favorites only apply to songs';
+			}
+			const track = result.data as Track;
+			const added = await favoritesManager.toggle(track);
+			return added ? 'Added to favorites' : 'Removed from favorites';
+		},
+		getSavedPlaylists: () => loadPlaylists(),
+		onPlaySavedPlaylist: async (playlist: Playlist) => {
+			if (playlist.tracks.length === 0) {
+				throw new Error(`No tracks in "${playlist.name}"`);
+			}
+			await queueAndPlay(playlist.tracks);
+		},
+		onPlayAllFavorites: async () => {
+			const favorites = favoritesManager.getAllTracks();
+			if (favorites.length === 0) {
+				return 'No favorites yet — press F while playing';
+			}
+			await queueAndPlay(favorites);
+			return null;
+		},
+		onPlayRandomFavorite: async () => {
+			const track = favoritesManager.randomOne();
+			if (!track) {
+				return 'No favorites yet — press F while playing';
+			}
+			await queueAndPlay([track]);
+			return null;
 		},
 	});
 

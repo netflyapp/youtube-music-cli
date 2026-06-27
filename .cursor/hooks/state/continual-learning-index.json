@@ -1,0 +1,14 @@
+{
+	"version": 1,
+	"lastUpdatedAtMs": 1782597100000,
+	"transcripts": {
+		"e16c7eaf-fc69-4e36-9954-541f8fcf5e67/e16c7eaf-fc69-4e36-9954-541f8fcf5e67.jsonl": {
+			"mtimeMs": 1782597057663.725,
+			"processedAtMs": 1782597100000
+		},
+		"e16c7eaf-fc69-4e36-9954-541f8fcf5e67/subagents/d015aa8a-9f63-40c3-8a19-9e06f0ff6a76.jsonl": {
+			"mtimeMs": 1782597074817.5413,
+			"processedAtMs": 1782597100000
+		}
+	}
+}

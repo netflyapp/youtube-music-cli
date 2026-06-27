@@ -1,1 +1,1 @@
-export type ActiveOverlay = 'none' | 'search' | 'library';
+export type ActiveOverlay = 'none' | 'search' | 'library' | 'settings';

@@ -238,7 +238,7 @@ A fullscreen Windows-only TUI experience wired to the real player stack (`Player
 
 - **Bridge** (`source/immersive/immersive-app.ts`) - Connects player services, queue state, library/search overlays, favorites, mix creation, and notifications
 - **Actions** (`source/immersive/actions/playback-actions.ts`) - Shared play-from-search, mix creation, favorites, and saved playlist helpers
-- **UI overlays** (`source/immersive/ui/`) - Search browse (songs/albums/artists/playlists), library menu, layout helpers
+- **UI overlays** (`source/immersive/ui/`) - Search browse, library menu, settings overlay, two-line footer with mode status
 - **Renderer** (`source/immersive/renderer/`) - Frame buffer, braille canvas for 2x4 pixel density, flicker-free ANSI output
 - **Visualizer** (`source/immersive/visualizer/`) - Hybrid playback-synced audio bars, disco color cycling with beat detection
 - **Effects** (`source/immersive/effects/`) - Particle system for disco mode, dominant color extraction

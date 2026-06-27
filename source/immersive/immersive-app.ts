@@ -1,4 +1,5 @@
 import process from 'node:process';
+import type {EqualizerPreset} from '../types/config.types.ts';
 import type {Flags} from '../types/cli.types.ts';
 import type {
 	Playlist,
@@ -20,12 +21,16 @@ import {
 import {
 	advanceQueue,
 	createInitialImmersiveState,
+	cycleRepeat,
+	formatRepeatLabel,
 	previousQueue,
 	setQueue,
+	toggleShuffle,
 	trackArtists,
 	trackYouTubeUrl,
 	type ImmersivePlayerState,
 } from './state/queue-state.ts';
+import type {SettingsRow} from './ui/settings-overlay.ts';
 import {updateTrayIcon} from './native/tray.ts';
 import {showTrackChangeToast} from './native/notifications.ts';
 import {
@@ -36,6 +41,99 @@ import {
 export interface ImmersiveAppOptions {
 	flags?: Flags;
 	discoMode?: boolean;
+}
+
+const CROSSFADE_PRESETS = [0, 1, 2, 3, 5];
+const EQUALIZER_PRESETS: EqualizerPreset[] = [
+	'flat',
+	'bass_boost',
+	'vocal',
+	'bright',
+	'warm',
+];
+const STREAM_QUALITIES = ['low', 'medium', 'high'] as const;
+
+function formatEqualizerLabel(preset: EqualizerPreset): string {
+	switch (preset) {
+		case 'bass_boost':
+			return 'Bass Boost';
+		case 'vocal':
+			return 'Vocal';
+		case 'bright':
+			return 'Bright';
+		case 'warm':
+			return 'Warm';
+		default:
+			return 'Flat';
+	}
+}
+
+function buildSettingsRows(
+	config: ReturnType<typeof getConfigService>,
+): SettingsRow[] {
+	const quality = config.get('streamQuality') ?? 'medium';
+	const crossfade = config.get('crossfadeDuration') ?? 0;
+	const equalizer = config.get('equalizerPreset') ?? 'flat';
+
+	return [
+		{label: 'Stream Quality', value: quality},
+		{
+			label: 'Gapless Playback',
+			value: config.get('gaplessPlayback') ? 'On' : 'Off',
+		},
+		{
+			label: 'Crossfade',
+			value: crossfade === 0 ? 'Off' : `${crossfade}s`,
+		},
+		{
+			label: 'Audio Normalization',
+			value: config.get('audioNormalization') ? 'On' : 'Off',
+		},
+		{label: 'Equalizer', value: formatEqualizerLabel(equalizer)},
+	];
+}
+
+function cycleSettingsRow(
+	config: ReturnType<typeof getConfigService>,
+	index: number,
+): void {
+	switch (index) {
+		case 0: {
+			const current = config.get('streamQuality') ?? 'medium';
+			const currentIndex = STREAM_QUALITIES.indexOf(
+				current as (typeof STREAM_QUALITIES)[number],
+			);
+			const nextIndex =
+				currentIndex === -1 ? 0 : (currentIndex + 1) % STREAM_QUALITIES.length;
+			config.set('streamQuality', STREAM_QUALITIES[nextIndex] ?? 'medium');
+			break;
+		}
+		case 1: {
+			config.set('gaplessPlayback', !config.get('gaplessPlayback'));
+			break;
+		}
+		case 2: {
+			const current = config.get('crossfadeDuration') ?? 0;
+			const currentIndex = CROSSFADE_PRESETS.indexOf(current);
+			const nextIndex =
+				currentIndex === -1 ? 0 : (currentIndex + 1) % CROSSFADE_PRESETS.length;
+			config.set('crossfadeDuration', CROSSFADE_PRESETS[nextIndex] ?? 0);
+			break;
+		}
+		case 3: {
+			config.set('audioNormalization', !config.get('audioNormalization'));
+			break;
+		}
+		case 4: {
+			const current = config.get('equalizerPreset') ?? 'flat';
+			const currentIndex = EQUALIZER_PRESETS.indexOf(current);
+			const nextPreset =
+				EQUALIZER_PRESETS[(currentIndex + 1) % EQUALIZER_PRESETS.length] ??
+				'flat';
+			config.set('equalizerPreset', nextPreset);
+			break;
+		}
+	}
 }
 
 function getPlaybackOptions(volume: number) {
@@ -219,6 +317,11 @@ export async function startImmersiveApp(
 
 	const {tracks, queueIndex, startPlaying, savedProgress, savedVolume} =
 		await resolveInitialTrack(options.flags);
+	const persisted = await loadPlayerState();
+	if (persisted) {
+		state.shuffle = persisted.shuffle;
+		state.repeat = persisted.repeat;
+	}
 	if (tracks.length > 0) {
 		setQueue(state, tracks);
 		state.queueIndex = queueIndex;
@@ -297,6 +400,11 @@ export async function startImmersiveApp(
 
 		if (event.eof) {
 			eofTimestamp = Date.now();
+			if (state.repeat === 'one' && state.currentTrack) {
+				state.currentTime = 0;
+				void playTrackAtIndex(state, state.queueIndex);
+				return;
+			}
 			void handleNext();
 		}
 
@@ -415,6 +523,22 @@ export async function startImmersiveApp(
 			}
 			await queueAndPlay([track]);
 			return null;
+		},
+		onToggleShuffle: () => {
+			const enabled = toggleShuffle(state);
+			showTrackChangeToast('Shuffle', enabled ? 'On' : 'Off');
+		},
+		onToggleRepeat: () => {
+			const mode = cycleRepeat(state);
+			showTrackChangeToast('Repeat', formatRepeatLabel(mode));
+		},
+		getSettingsRows: () => buildSettingsRows(config),
+		onSettingsCycle: index => {
+			cycleSettingsRow(config, index);
+			showTrackChangeToast(
+				'Settings',
+				buildSettingsRows(config)[index]?.value ?? 'Updated',
+			);
 		},
 	});
 

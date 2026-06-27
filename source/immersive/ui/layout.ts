@@ -17,7 +17,7 @@ export interface ImmersiveLayout {
 
 export function computeLayout(width: number, height: number): ImmersiveLayout {
 	const headerRows = 1;
-	const footerRows = 2;
+	const footerRows = 3;
 	const margin = 2;
 	const innerW = Math.max(20, width - margin * 2);
 	const contentH = Math.max(12, height - headerRows - footerRows);
@@ -66,4 +66,46 @@ export function buildVolumeBar(volume: number, width: number): string {
 	const ratio = Math.max(0, Math.min(100, volume)) / 100;
 	const filled = Math.round(ratio * width);
 	return '█'.repeat(filled) + '░'.repeat(Math.max(0, width - filled));
+}
+
+export function buildModeStatusLine(state: {
+	shuffle: boolean;
+	repeat: 'off' | 'all' | 'one';
+	isDiscoMode: boolean;
+}): string {
+	const shuffle = state.shuffle ? 'ON' : 'OFF';
+	const repeat =
+		state.repeat === 'all' ? 'ALL' : state.repeat === 'one' ? 'ONE' : 'OFF';
+	const disco = state.isDiscoMode ? 'ON' : 'OFF';
+	return `Shuffle ${shuffle} · Repeat ${repeat} · Disco ${disco}`;
+}
+
+export function buildPlayerShortcutLine(maxWidth: number): string {
+	const required = [
+		'[←→] Track',
+		'[Space] Play',
+		'[Shift+S] Shuffle',
+		'[R] Repeat',
+		'[F] Fav',
+		'[L] Library',
+		'[Ctrl+,] Settings',
+		'[/] Search',
+		'[Q] Quit',
+	];
+	const optional = ['[P] Playlists', '[E] Favorites', '[D] Disco'];
+
+	let line = required.join('  ');
+	for (const segment of optional) {
+		const candidate = `${line}  ${segment}`;
+		if (candidate.length > maxWidth) {
+			break;
+		}
+		line = candidate;
+	}
+
+	if (line.length > maxWidth) {
+		return `${line.slice(0, Math.max(0, maxWidth - 3))}...`;
+	}
+
+	return line;
 }

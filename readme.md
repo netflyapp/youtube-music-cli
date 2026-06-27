@@ -215,7 +215,9 @@ dist/ymc-win32.exe
 | `L`        | Library menu (playlists, favorites)          |
 | `P`        | Open saved playlist picker                   |
 | `E`        | Play all favorites                           |
-| `R`        | Play random favorite                         |
+| `Shift+S`  | Toggle shuffle                               |
+| `R`        | Cycle repeat (off → all → one)               |
+| `Ctrl+,`   | Open settings overlay                        |
 | `M`        | Create mix from search result (results view) |
 | `D`        | Toggle disco mode                            |
 | `↑` / `↓`  | Volume up / down (player) or navigate lists  |
@@ -224,6 +226,8 @@ dist/ymc-win32.exe
 | `Esc`      | Back / close overlay                         |
 | `Q`        | Quit immersive mode                          |
 | `Ctrl+C`   | Force quit                                   |
+
+The footer shows shuffle/repeat/disco status on one line and prioritized shortcuts on the next. Random favorite is available from the library menu (`L`).
 
 Global media keys (Alt+Media keys) also work when the terminal is unfocused on Windows with Bun runtime.
 

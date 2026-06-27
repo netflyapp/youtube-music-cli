@@ -45,11 +45,20 @@ import {
 	type LibraryOverlayState,
 } from './ui/library-overlay.ts';
 import {
+	createSettingsOverlayState,
+	handleSettingsInput,
+	openSettingsOverlay,
+	type SettingsOverlayState,
+	type SettingsRow,
+} from './ui/settings-overlay.ts';
+import {
 	getUpcomingTracks,
 	trackArtists,
 	type ImmersivePlayerState,
 } from './state/queue-state.ts';
 import {
+	buildModeStatusLine,
+	buildPlayerShortcutLine,
 	buildProgressBar,
 	buildVolumeBar,
 	computeLayout,
@@ -91,6 +100,10 @@ export interface ImmersiveOptions {
 	onPlaySavedPlaylist?: (playlist: Playlist) => Promise<void>;
 	onPlayAllFavorites?: () => Promise<string | null>;
 	onPlayRandomFavorite?: () => Promise<string | null>;
+	onToggleShuffle?: () => void;
+	onToggleRepeat?: () => void;
+	getSettingsRows?: () => SettingsRow[];
+	onSettingsCycle?: (index: number) => void;
 }
 
 export class ImmersiveEngine {
@@ -103,6 +116,7 @@ export class ImmersiveEngine {
 	private particleSystem: DiscoParticleSystem | null = null;
 	private searchOverlay: SearchOverlayState = createSearchOverlayState();
 	private libraryOverlay: LibraryOverlayState = createLibraryOverlayState();
+	private settingsOverlay: SettingsOverlayState = createSettingsOverlayState();
 
 	private options: ImmersiveOptions;
 	private effectiveWidth: number;
@@ -282,7 +296,15 @@ export class ImmersiveEngine {
 				this.options.isFavorite,
 			);
 			renderQueuePanel(fb, layout, playerState, accentColor);
-			renderControls(fb, tw, th, this.searchOverlay, this.libraryOverlay);
+			renderControls(
+				fb,
+				tw,
+				th,
+				playerState,
+				this.searchOverlay,
+				this.libraryOverlay,
+				this.settingsOverlay,
+			);
 			renderSearchOverlay(fb, tw, th, this.searchOverlay);
 			renderLibraryOverlay(
 				fb,
@@ -290,6 +312,13 @@ export class ImmersiveEngine {
 				th,
 				this.libraryOverlay,
 				this.options.getSavedPlaylists?.() ?? [],
+			);
+			renderSettingsOverlay(
+				fb,
+				tw,
+				th,
+				this.settingsOverlay,
+				this.options.getSettingsRows?.() ?? [],
 			);
 
 			const isDisco =
@@ -378,6 +407,11 @@ export class ImmersiveEngine {
 				return;
 			}
 
+			if (this.settingsOverlay.active) {
+				this.handleSettingsKey(keyName);
+				return;
+			}
+
 			if (keyName === 'Ctrl+C') {
 				this.stop();
 				process.exit(0);
@@ -403,11 +437,16 @@ export class ImmersiveEngine {
 				case 'e':
 					void this.runLibraryAction(() => this.options.onPlayAllFavorites?.());
 					break;
-				case 'r':
-					void this.runLibraryAction(() =>
-						this.options.onPlayRandomFavorite?.(),
-					);
+				case 'Shift+S':
+					this.options.onToggleShuffle?.();
 					break;
+				case 'r':
+					this.options.onToggleRepeat?.();
+					break;
+				case 'Ctrl+,': {
+					openSettingsOverlay(this.settingsOverlay);
+					break;
+				}
 				case 'up':
 					this.options.onVolumeUp?.();
 					break;
@@ -520,6 +559,15 @@ export class ImmersiveEngine {
 		} catch (error) {
 			this.libraryOverlay.status =
 				error instanceof Error ? error.message : 'Failed to play playlist';
+		}
+	}
+
+	private handleSettingsKey(key: string): void {
+		const rows = this.options.getSettingsRows?.() ?? [];
+		const action = handleSettingsInput(this.settingsOverlay, key, rows.length);
+
+		if (action === 'cycle') {
+			this.options.onSettingsCycle?.(this.settingsOverlay.selectedIndex);
 		}
 	}
 
@@ -831,7 +879,22 @@ function renderNowPlaying(
 	y += 1;
 
 	const statusText = state.isPlaying ? '▶  PLAYING' : '⏸  PAUSED';
-	fb.setText(innerX, y, statusText, accent, null, {bold: true});
+	const modeTags: string[] = [];
+	if (state.shuffle) {
+		modeTags.push('SHF');
+	}
+	if (state.repeat !== 'off') {
+		modeTags.push(state.repeat === 'all' ? 'RPT ALL' : 'RPT ONE');
+	}
+	const statusSuffix = modeTags.length > 0 ? `  ${modeTags.join(' ')}` : '';
+	fb.setText(
+		innerX,
+		y,
+		truncateText(`${statusText}${statusSuffix}`, maxTextW),
+		accent,
+		null,
+		{bold: true},
+	);
 	y += 1;
 
 	const duration = resolveDuration(state);
@@ -904,16 +967,21 @@ function renderControls(
 	fb: FrameBuffer,
 	width: number,
 	height: number,
+	playerState: ImmersivePlayerState | undefined,
 	searchOverlay: SearchOverlayState,
 	libraryOverlay: LibraryOverlayState,
+	settingsOverlay: SettingsOverlayState,
 ): void {
-	const separatorY = height - 3;
+	const separatorY = height - 4;
+	const modeY = height - 3;
+	const controlsY = height - 2;
+
 	fb.setText(1, separatorY, '─'.repeat(Math.max(0, width - 2)), null, null, {
 		dim: true,
 	});
 
-	const controlsY = height - 2;
-	let controls: string;
+	let modeLine = '';
+	let controls = '';
 
 	if (searchOverlay.active) {
 		controls =
@@ -925,9 +993,20 @@ function renderControls(
 			libraryOverlay.view === 'menu'
 				? '[↑↓] Navigate   [Enter] Select   [Esc] Close'
 				: '[↑↓] Select playlist   [Enter] Play   [Esc] Back';
+	} else if (settingsOverlay.active) {
+		controls = '[↑↓] Navigate   [Enter] Cycle   [Esc] Close';
+	} else if (playerState) {
+		modeLine = buildModeStatusLine(playerState);
+		controls = buildPlayerShortcutLine(width - 4);
 	} else {
-		controls =
-			'[←→] Track   [Space] Play   [F] Favorite   [L] Library   [P] Playlists   [E] Favorites   [R] Random   [/] Search   [D] Disco   [Q] Quit';
+		controls = buildPlayerShortcutLine(width - 4);
+	}
+
+	if (modeLine) {
+		const modeX = Math.max(2, Math.floor((width - modeLine.length) / 2));
+		fb.setText(modeX, modeY, truncateText(modeLine, width - 4), null, null, {
+			dim: true,
+		});
 	}
 
 	const x = Math.max(2, Math.floor((width - controls.length) / 2));
@@ -1078,6 +1157,59 @@ function renderLibraryOverlay(
 				);
 			}
 		}
+	}
+
+	if (overlay.status) {
+		fb.setText(
+			boxX + 2,
+			boxY + boxH - 2,
+			truncateText(overlay.status, boxW - 4),
+			null,
+			null,
+			{dim: true},
+		);
+	}
+}
+
+function renderSettingsOverlay(
+	fb: FrameBuffer,
+	width: number,
+	height: number,
+	overlay: SettingsOverlayState,
+	rows: SettingsRow[],
+): void {
+	if (!overlay.active) {
+		return;
+	}
+
+	const boxH = Math.min(Math.max(10, rows.length + 4), height - 6);
+	const boxY = Math.max(2, Math.floor((height - boxH) / 2));
+	const boxW = Math.min(width - 4, 56);
+	const boxX = Math.floor((width - boxW) / 2);
+
+	fb.drawRect(boxX, boxY, boxW, boxH, null, null, 'single');
+	fb.setText(boxX + 2, boxY, ' SETTINGS ', null, null, {bold: true});
+
+	if (rows.length === 0) {
+		fb.setText(boxX + 2, boxY + 2, 'No settings available', null, null, {
+			dim: true,
+		});
+		return;
+	}
+
+	for (let i = 0; i < rows.length; i++) {
+		const row = rows[i];
+		if (!row) continue;
+		const marker = i === overlay.selectedIndex ? '>' : ' ';
+		const line = truncateText(`${marker} ${row.label}: ${row.value}`, boxW - 4);
+		fb.setText(
+			boxX + 2,
+			boxY + 2 + i,
+			line,
+			null,
+			null,
+			i === overlay.selectedIndex ? {bold: true} : {dim: true},
+		);
 	}
 
 	if (overlay.status) {

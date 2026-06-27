@@ -12,6 +12,9 @@ test('parseKeyName maps arrow keys and control keys', async t => {
 	t.is(parseKeyName('\x03'), 'Ctrl+C');
 	t.is(parseKeyName('/'), '/');
 	t.is(parseKeyName('\r'), 'enter');
+	t.is(parseKeyName('S'), 'Shift+S');
+	t.is(parseKeyName('s'), 's');
+	t.is(parseKeyName('\x1c'), 'Ctrl+,');
 });
 
 test('AudioCollector processes frequency bands', async t => {
@@ -84,6 +87,59 @@ test('queue-state advances and rewinds queue', async t => {
 	t.is(previousQueue(state)?.videoId, 'b');
 });
 
+test('queue-state supports shuffle and repeat-all', async t => {
+	const {advanceQueue, createInitialImmersiveState, setQueue} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState({shuffle: true});
+	setQueue(state, [
+		{videoId: 'a', title: 'A', artists: []},
+		{videoId: 'b', title: 'B', artists: []},
+		{videoId: 'c', title: 'C', artists: []},
+	]);
+
+	const first = advanceQueue(state)?.videoId;
+	t.not(first, 'a');
+	t.true(['b', 'c'].includes(first ?? ''));
+
+	state.shuffle = false;
+	state.repeat = 'all';
+	state.queueIndex = 2;
+	state.currentTrack = state.queue[2] ?? null;
+	t.is(advanceQueue(state)?.videoId, 'a');
+});
+
+test('queue-state cycles repeat modes', async t => {
+	const {createInitialImmersiveState, cycleRepeat} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState();
+	t.is(cycleRepeat(state), 'all');
+	t.is(cycleRepeat(state), 'one');
+	t.is(cycleRepeat(state), 'off');
+});
+
+test('settings overlay navigates and cycles rows', async t => {
+	const {
+		closeSettingsOverlay,
+		createSettingsOverlayState,
+		handleSettingsInput,
+		openSettingsOverlay,
+	} = await import('../source/immersive/ui/settings-overlay.ts');
+
+	const overlay = createSettingsOverlayState();
+	openSettingsOverlay(overlay);
+	t.true(overlay.active);
+
+	t.is(handleSettingsInput(overlay, 'down', 5), 'none');
+	t.is(overlay.selectedIndex, 1);
+	t.is(handleSettingsInput(overlay, 'enter', 5), 'cycle');
+	t.is(handleSettingsInput(overlay, 'escape', 5), 'close');
+	t.false(overlay.active);
+
+	closeSettingsOverlay(overlay);
+});
+
 test('HybridAudioSource reacts to playback state', async t => {
 	const {HybridAudioSource} =
 		await import('../source/immersive/visualizer/hybrid-audio.ts');
@@ -112,8 +168,13 @@ test('HybridAudioSource reacts to playback state', async t => {
 });
 
 test('layout helpers compute regions and progress bars', async t => {
-	const {buildProgressBar, buildVolumeBar, computeLayout} =
-		await import('../source/immersive/ui/layout.ts');
+	const {
+		buildModeStatusLine,
+		buildPlayerShortcutLine,
+		buildProgressBar,
+		buildVolumeBar,
+		computeLayout,
+	} = await import('../source/immersive/ui/layout.ts');
 
 	const layout = computeLayout(100, 30);
 	t.true(layout.vizH >= 7);
@@ -127,6 +188,18 @@ test('layout helpers compute regions and progress bars', async t => {
 
 	const vol = buildVolumeBar(50, 8);
 	t.is(vol.length, 8);
+
+	const modeLine = buildModeStatusLine({
+		shuffle: true,
+		repeat: 'all',
+		isDiscoMode: false,
+	});
+	t.true(modeLine.includes('Shuffle ON'));
+	t.true(modeLine.includes('Repeat ALL'));
+
+	const shortcuts = buildPlayerShortcutLine(120);
+	t.true(shortcuts.includes('[Shift+S] Shuffle'));
+	t.true(shortcuts.includes('[Ctrl+,] Settings'));
 });
 
 test('search overlay handles query and results phases', async t => {

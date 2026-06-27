@@ -1,14 +1,27 @@
-export function parseKeyName(data: string): string | null {
-	const codes: Record<string, string> = {
-		'\x1B[A': 'up',
-		'\x1B[B': 'down',
-		'\x1B[C': 'right',
-		'\x1B[D': 'left',
-		'\x1B': 'escape',
-	};
+const ARROW_CODES: Record<string, string> = {
+	'\x1B[A': 'up',
+	'\x1B[B': 'down',
+	'\x1B[C': 'right',
+	'\x1B[D': 'left',
+	'\x1B': 'escape',
+};
 
-	if (codes[data]) {
-		return codes[data]!;
+const CTRL_COMMA_SEQUENCES = ['\x1c', '\x1b[44;5u', '\x1b[44;5;u'];
+
+function parseShiftLetter(data: string): string | null {
+	if (data.length !== 1 || data < 'A' || data > 'Z') {
+		return null;
+	}
+	return `Shift+${data}`;
+}
+
+export function parseKeyName(data: string): string | null {
+	if (ARROW_CODES[data]) {
+		return ARROW_CODES[data]!;
+	}
+
+	if (CTRL_COMMA_SEQUENCES.includes(data)) {
+		return 'Ctrl+,';
 	}
 
 	if (data === ' ') {
@@ -31,8 +44,9 @@ export function parseKeyName(data: string): string | null {
 		return data;
 	}
 
-	if (data.length === 1 && data >= 'A' && data <= 'Z') {
-		return data.toLowerCase();
+	const shiftKey = parseShiftLetter(data);
+	if (shiftKey) {
+		return shiftKey;
 	}
 
 	if (data === '/' || data === '?') {

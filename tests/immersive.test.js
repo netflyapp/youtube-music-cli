@@ -13,8 +13,34 @@ test('parseKeyName maps arrow keys and control keys', async t => {
 	t.is(parseKeyName('/'), '/');
 	t.is(parseKeyName('\r'), 'enter');
 	t.is(parseKeyName('S'), 'Shift+S');
+	t.is(parseKeyName('D'), 'Shift+D');
 	t.is(parseKeyName('s'), 's');
-	t.is(parseKeyName('\x1c'), 'Ctrl+,');
+	t.is(parseKeyName(','), ',');
+	t.is(parseKeyName('\t'), 'tab');
+	t.is(parseKeyName('\x01'), 'Ctrl+A');
+	t.is(parseKeyName('\x0c'), 'Ctrl+L');
+	t.is(parseKeyName('+'), '+');
+	t.is(parseKeyName('\x1b[44;5u'), 'Ctrl+,');
+	t.is(parseKeyName('\x1b[44;5;1u'), 'Ctrl+,');
+	t.is(parseKeyName('\x1c'), null);
+});
+
+test('StdinKeyBuffer assembles chunked Ctrl+, sequences', async t => {
+	const {StdinKeyBuffer} =
+		await import('../source/immersive/input/stdin-buffer.ts');
+
+	const keys = [];
+	const buffer = new StdinKeyBuffer(key => {
+		keys.push(key);
+	});
+
+	buffer.push('\x1b');
+	t.is(keys.length, 0);
+
+	buffer.push('[44;5;1u');
+	t.deepEqual(keys, ['Ctrl+,']);
+
+	buffer.dispose();
 });
 
 test('AudioCollector processes frequency bands', async t => {
@@ -125,19 +151,50 @@ test('settings overlay navigates and cycles rows', async t => {
 		createSettingsOverlayState,
 		handleSettingsInput,
 		openSettingsOverlay,
+		SETTINGS_ROW_COUNT,
 	} = await import('../source/immersive/ui/settings-overlay.ts');
 
 	const overlay = createSettingsOverlayState();
 	openSettingsOverlay(overlay);
 	t.true(overlay.active);
+	t.is(SETTINGS_ROW_COUNT, 23);
 
-	t.is(handleSettingsInput(overlay, 'down', 5), 'none');
+	t.is(handleSettingsInput(overlay, 'down', SETTINGS_ROW_COUNT), 'none');
 	t.is(overlay.selectedIndex, 1);
-	t.is(handleSettingsInput(overlay, 'enter', 5), 'cycle');
-	t.is(handleSettingsInput(overlay, 'escape', 5), 'close');
+	t.is(handleSettingsInput(overlay, 'enter', SETTINGS_ROW_COUNT), 'cycle');
+	overlay.selectedIndex = 10;
+	t.is(handleSettingsInput(overlay, 'enter', SETTINGS_ROW_COUNT), 'begin_text');
+	overlay.selectedIndex = 19;
+	t.is(handleSettingsInput(overlay, 'enter', SETTINGS_ROW_COUNT), 'navigate');
+	t.is(handleSettingsInput(overlay, 'escape', SETTINGS_ROW_COUNT), 'close');
 	t.false(overlay.active);
 
 	closeSettingsOverlay(overlay);
+});
+
+test('immersive settings items match TUI row count and cycle values', async t => {
+	const {
+		buildImmersiveSettingsRows,
+		cycleImmersiveSetting,
+		createSleepTimerState,
+	} = await import('../source/immersive/settings/settings-items.ts');
+	const {getConfigService} =
+		await import('../source/services/config/config.service.ts');
+
+	const config = getConfigService();
+	const sleepTimer = createSleepTimerState();
+	const rows = buildImmersiveSettingsRows(config);
+
+	t.is(rows.length, 23);
+	t.true(rows[0]?.label.includes('Stream Quality'));
+	t.true(rows[18]?.label.includes('Sleep Timer'));
+	t.true(rows[22]?.label.includes('Manage Plugins'));
+
+	const message = cycleImmersiveSetting(config, 6, {
+		sleepTimer,
+		onSleepTimerExpire: () => {},
+	});
+	t.true(message?.includes('Subtitles'));
 });
 
 test('HybridAudioSource reacts to playback state', async t => {
@@ -199,7 +256,67 @@ test('layout helpers compute regions and progress bars', async t => {
 
 	const shortcuts = buildPlayerShortcutLine(120);
 	t.true(shortcuts.includes('[Shift+S] Shuffle'));
-	t.true(shortcuts.includes('[Ctrl+,] Settings'));
+	t.true(shortcuts.includes('[,] Settings'));
+});
+
+test('search overlay supports type, limit, filters, and download', async t => {
+	const {
+		beginFilterEdit,
+		buildSearchHeaderLine,
+		createSearchOverlayState,
+		decreaseSearchLimit,
+		handleFilterEditInput,
+		handleSearchQueryMetaKey,
+		handleSearchResultsInput,
+		openSearchOverlay,
+		setSearchResults,
+	} = await import('../source/immersive/ui/search-overlay.ts');
+
+	const overlay = createSearchOverlayState();
+	openSearchOverlay(overlay);
+	t.is(overlay.searchLimit, 25);
+
+	t.true(handleSearchQueryMetaKey(overlay, 'tab'));
+	t.is(overlay.searchType, 'songs');
+
+	t.true(handleSearchQueryMetaKey(overlay, '+'));
+	t.is(overlay.searchLimit, 30);
+	decreaseSearchLimit(overlay);
+	t.is(overlay.searchLimit, 25);
+
+	beginFilterEdit(overlay, 'artist');
+	handleFilterEditInput(overlay, 'm');
+	handleFilterEditInput(overlay, 'i');
+	handleFilterEditInput(overlay, 'c');
+	handleFilterEditInput(overlay, 'h');
+	handleFilterEditInput(overlay, 'a');
+	handleFilterEditInput(overlay, 'e');
+	handleFilterEditInput(overlay, 'l');
+	handleFilterEditInput(overlay, 'enter');
+	t.is(overlay.filters.artist, 'michael');
+
+	setSearchResults(overlay, [
+		{
+			type: 'song',
+			data: {
+				videoId: 'a',
+				title: 'Beat It',
+				artists: [{name: 'Michael Jackson'}],
+			},
+		},
+		{
+			type: 'song',
+			data: {
+				videoId: 'b',
+				title: 'Other',
+				artists: [{name: 'Someone Else'}],
+			},
+		},
+	]);
+	t.is(overlay.results.length, 1);
+	t.true(buildSearchHeaderLine(overlay).includes('SONGS'));
+
+	t.is(handleSearchResultsInput(overlay, 'Shift+D'), 'download');
 });
 
 test('search overlay handles query and results phases', async t => {
@@ -301,7 +418,7 @@ test('playback-actions dedupe tracks and favorites manager toggles', async t => 
 });
 
 test('getSearchResultLabel and prefix format results', async t => {
-	const {getSearchResultLabel, getSearchResultPrefix} =
+	const {formatSearchResultLine, getSearchResultLabel, getSearchResultPrefix} =
 		await import('../source/immersive/actions/playback-actions.ts');
 
 	t.is(getSearchResultPrefix('song'), '♪');
@@ -313,4 +430,19 @@ test('getSearchResultLabel and prefix format results', async t => {
 		}),
 		'Hello',
 	);
+
+	const line = formatSearchResultLine(
+		{
+			type: 'song',
+			data: {
+				videoId: '1',
+				title: 'Hello',
+				artists: [{name: 'Artist'}],
+				duration: 125,
+			},
+		},
+		60,
+	);
+	t.true(line.includes('Hello'));
+	t.true(line.includes('Artist'));
 });

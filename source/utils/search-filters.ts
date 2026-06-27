@@ -60,6 +60,7 @@ function matchesArtistFilter(result: SearchResult, filter: string): boolean {
 		if (track.artists.some(artist => includesIgnoreCase(artist.name, filter))) {
 			return true;
 		}
+
 		if (
 			track.album?.artists?.some(artist =>
 				includesIgnoreCase(artist.name, filter),
@@ -67,6 +68,8 @@ function matchesArtistFilter(result: SearchResult, filter: string): boolean {
 		) {
 			return true;
 		}
+
+		return false;
 	}
 
 	if (isAlbumResult(result)) {

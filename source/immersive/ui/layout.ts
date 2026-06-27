@@ -88,7 +88,7 @@ export function buildPlayerShortcutLine(maxWidth: number): string {
 		'[R] Repeat',
 		'[F] Fav',
 		'[L] Library',
-		'[Ctrl+,] Settings',
+		'[,] Settings',
 		'[/] Search',
 		'[Q] Quit',
 	];

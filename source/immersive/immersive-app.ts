@@ -1,5 +1,4 @@
 import process from 'node:process';
-import type {EqualizerPreset} from '../types/config.types.ts';
 import type {Flags} from '../types/cli.types.ts';
 import type {
 	Playlist,
@@ -9,6 +8,7 @@ import type {
 import {getConfigService} from '../services/config/config.service.ts';
 import {getMusicService} from '../services/youtube-music/api.ts';
 import {getPlayerService} from '../services/player/player.service.ts';
+import {getDownloadService} from '../services/download/download.service.ts';
 import {ensurePlaybackDependencies} from '../services/player/dependency-check.service.ts';
 import {loadPlayerState} from '../services/player-state/player-state.service.ts';
 import {ImmersiveEngine} from './immersive-engine.ts';
@@ -30,7 +30,14 @@ import {
 	trackYouTubeUrl,
 	type ImmersivePlayerState,
 } from './state/queue-state.ts';
-import type {SettingsRow} from './ui/settings-overlay.ts';
+import {
+	buildImmersiveSettingsRows,
+	createSleepTimerState,
+	cycleImmersiveSetting,
+	getSettingsTextDraft,
+	saveSettingsTextField,
+	type SettingsTextField,
+} from './settings/settings-items.ts';
 import {updateTrayIcon} from './native/tray.ts';
 import {showTrackChangeToast} from './native/notifications.ts';
 import {
@@ -43,98 +50,8 @@ export interface ImmersiveAppOptions {
 	discoMode?: boolean;
 }
 
-const CROSSFADE_PRESETS = [0, 1, 2, 3, 5];
-const EQUALIZER_PRESETS: EqualizerPreset[] = [
-	'flat',
-	'bass_boost',
-	'vocal',
-	'bright',
-	'warm',
-];
-const STREAM_QUALITIES = ['low', 'medium', 'high'] as const;
-
-function formatEqualizerLabel(preset: EqualizerPreset): string {
-	switch (preset) {
-		case 'bass_boost':
-			return 'Bass Boost';
-		case 'vocal':
-			return 'Vocal';
-		case 'bright':
-			return 'Bright';
-		case 'warm':
-			return 'Warm';
-		default:
-			return 'Flat';
-	}
-}
-
-function buildSettingsRows(
-	config: ReturnType<typeof getConfigService>,
-): SettingsRow[] {
-	const quality = config.get('streamQuality') ?? 'medium';
-	const crossfade = config.get('crossfadeDuration') ?? 0;
-	const equalizer = config.get('equalizerPreset') ?? 'flat';
-
-	return [
-		{label: 'Stream Quality', value: quality},
-		{
-			label: 'Gapless Playback',
-			value: config.get('gaplessPlayback') ? 'On' : 'Off',
-		},
-		{
-			label: 'Crossfade',
-			value: crossfade === 0 ? 'Off' : `${crossfade}s`,
-		},
-		{
-			label: 'Audio Normalization',
-			value: config.get('audioNormalization') ? 'On' : 'Off',
-		},
-		{label: 'Equalizer', value: formatEqualizerLabel(equalizer)},
-	];
-}
-
-function cycleSettingsRow(
-	config: ReturnType<typeof getConfigService>,
-	index: number,
-): void {
-	switch (index) {
-		case 0: {
-			const current = config.get('streamQuality') ?? 'medium';
-			const currentIndex = STREAM_QUALITIES.indexOf(
-				current as (typeof STREAM_QUALITIES)[number],
-			);
-			const nextIndex =
-				currentIndex === -1 ? 0 : (currentIndex + 1) % STREAM_QUALITIES.length;
-			config.set('streamQuality', STREAM_QUALITIES[nextIndex] ?? 'medium');
-			break;
-		}
-		case 1: {
-			config.set('gaplessPlayback', !config.get('gaplessPlayback'));
-			break;
-		}
-		case 2: {
-			const current = config.get('crossfadeDuration') ?? 0;
-			const currentIndex = CROSSFADE_PRESETS.indexOf(current);
-			const nextIndex =
-				currentIndex === -1 ? 0 : (currentIndex + 1) % CROSSFADE_PRESETS.length;
-			config.set('crossfadeDuration', CROSSFADE_PRESETS[nextIndex] ?? 0);
-			break;
-		}
-		case 3: {
-			config.set('audioNormalization', !config.get('audioNormalization'));
-			break;
-		}
-		case 4: {
-			const current = config.get('equalizerPreset') ?? 'flat';
-			const currentIndex = EQUALIZER_PRESETS.indexOf(current);
-			const nextPreset =
-				EQUALIZER_PRESETS[(currentIndex + 1) % EQUALIZER_PRESETS.length] ??
-				'flat';
-			config.set('equalizerPreset', nextPreset);
-			break;
-		}
-	}
-}
+let immersiveDownloadInProgress = false;
+const sleepTimerState = createSleepTimerState();
 
 function getPlaybackOptions(volume: number) {
 	const config = getConfigService();
@@ -468,10 +385,10 @@ export async function startImmersiveApp(
 				added ? 'Added to favorites' : 'Removed from favorites',
 			);
 		},
-		onSearch: async query => {
+		onSearch: async ({query, type, limit}) => {
 			const response = await musicService.search(query, {
-				type: 'all',
-				limit: 15,
+				type,
+				limit,
 			});
 			if (response.results.length === 0) {
 				return {results: [], message: 'No results found'};
@@ -500,6 +417,36 @@ export async function startImmersiveApp(
 			const track = result.data as Track;
 			const added = await favoritesManager.toggle(track);
 			return added ? 'Added to favorites' : 'Removed from favorites';
+		},
+		onDownloadSearchResult: async (result: SearchResult) => {
+			if (immersiveDownloadInProgress) {
+				return 'Download already in progress. Please wait.';
+			}
+
+			const downloadService = getDownloadService();
+			const downloadConfig = downloadService.getConfig();
+			if (!downloadConfig.enabled) {
+				return 'Downloads are disabled. Enable Downloads in Settings.';
+			}
+
+			try {
+				immersiveDownloadInProgress = true;
+				const target = await downloadService.resolveSearchTarget(result);
+				if (target.tracks.length === 0) {
+					return `No tracks found for "${target.name}".`;
+				}
+
+				showTrackChangeToast(
+					'Download',
+					`Downloading ${target.tracks.length} track(s)...`,
+				);
+				const summary = await downloadService.downloadTracks(target.tracks);
+				return `Downloaded ${summary.downloaded}, skipped ${summary.skipped}, failed ${summary.failed}.`;
+			} catch (error) {
+				return error instanceof Error ? error.message : 'Download failed.';
+			} finally {
+				immersiveDownloadInProgress = false;
+			}
 		},
 		getSavedPlaylists: () => loadPlaylists(),
 		onPlaySavedPlaylist: async (playlist: Playlist) => {
@@ -532,14 +479,20 @@ export async function startImmersiveApp(
 			const mode = cycleRepeat(state);
 			showTrackChangeToast('Repeat', formatRepeatLabel(mode));
 		},
-		getSettingsRows: () => buildSettingsRows(config),
-		onSettingsCycle: index => {
-			cycleSettingsRow(config, index);
-			showTrackChangeToast(
-				'Settings',
-				buildSettingsRows(config)[index]?.value ?? 'Updated',
-			);
-		},
+		getSettingsRows: () => buildImmersiveSettingsRows(config),
+		getSettingsTextDraft: (field: SettingsTextField) =>
+			getSettingsTextDraft(config, field),
+		onSettingsCycle: index =>
+			cycleImmersiveSetting(config, index, {
+				sleepTimer: sleepTimerState,
+				onSleepTimerExpire: () => {
+					playerService.pause();
+					state.isPlaying = false;
+					sleepTimerState.lastPreset = null;
+				},
+			}),
+		onSettingsTextSave: (field, value) =>
+			saveSettingsTextField(config, field, value),
 	});
 
 	await engine.start();

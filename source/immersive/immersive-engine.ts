@@ -19,16 +19,18 @@ import {
 import {createTrayIcon, removeTrayIcon} from './native/tray.ts';
 import type {RGB} from './renderer/ansi-codes.ts';
 import type {Playlist, SearchResult} from '../types/youtube-music.types.ts';
-import {parseKeyName} from './input/key-parser.ts';
+import {StdinKeyBuffer} from './input/stdin-buffer.ts';
+import {formatSearchResultLine} from './actions/playback-actions.ts';
 import {
-	getSearchResultLabel,
-	getSearchResultPrefix,
-} from './actions/playback-actions.ts';
-import {
+	buildSearchHeaderLine,
 	closeSearchOverlay,
 	createSearchOverlayState,
+	formatSearchTypeLabel,
+	handleFilterEditInput,
 	handleSearchQueryInput,
+	handleSearchQueryMetaKey,
 	handleSearchResultsInput,
+	handleSearchResultsMetaKey,
 	openSearchOverlay,
 	setSearchResults,
 	type SearchOverlayState,
@@ -47,10 +49,14 @@ import {
 import {
 	createSettingsOverlayState,
 	handleSettingsInput,
+	handleSettingsTextEditInput,
+	beginSettingsTextEdit,
+	getSelectedTextField,
 	openSettingsOverlay,
 	type SettingsOverlayState,
 	type SettingsRow,
 } from './ui/settings-overlay.ts';
+import type {SettingsTextField} from './settings/settings-items.ts';
 import {
 	getUpcomingTracks,
 	trackArtists,
@@ -88,14 +94,17 @@ export interface ImmersiveOptions {
 	onNext?: () => void;
 	onPrevious?: () => void;
 	onToggleFavoriteCurrent?: () => void | Promise<void>;
-	onSearch?: (
-		query: string,
-	) => Promise<{results: SearchResult[]; message: string | null}>;
+	onSearch?: (options: {
+		query: string;
+		type: SearchOverlayState['searchType'];
+		limit: number;
+	}) => Promise<{results: SearchResult[]; message: string | null}>;
 	onPlaySearchResult?: (result: SearchResult) => Promise<void>;
 	onCreateMix?: (result: SearchResult) => Promise<string | null>;
 	onToggleFavoriteSearchResult?: (
 		result: SearchResult,
 	) => Promise<string | null>;
+	onDownloadSearchResult?: (result: SearchResult) => Promise<string | null>;
 	getSavedPlaylists?: () => Playlist[];
 	onPlaySavedPlaylist?: (playlist: Playlist) => Promise<void>;
 	onPlayAllFavorites?: () => Promise<string | null>;
@@ -103,7 +112,12 @@ export interface ImmersiveOptions {
 	onToggleShuffle?: () => void;
 	onToggleRepeat?: () => void;
 	getSettingsRows?: () => SettingsRow[];
-	onSettingsCycle?: (index: number) => void;
+	getSettingsTextDraft?: (field: SettingsTextField) => string;
+	onSettingsCycle?: (index: number) => string | null;
+	onSettingsTextSave?: (
+		field: SettingsTextField,
+		value: string,
+	) => string | null;
 }
 
 export class ImmersiveEngine {
@@ -123,6 +137,7 @@ export class ImmersiveEngine {
 	private effectiveHeight: number;
 	private isRunning = false;
 	private inputHandler: ((data: string) => void) | null = null;
+	private stdinKeyBuffer: StdinKeyBuffer | null = null;
 	private exitHandler: (() => void) | null = null;
 	private resizeHandler: (() => void) | null = null;
 	private listenersRemoved = false;
@@ -393,82 +408,12 @@ export class ImmersiveEngine {
 		process.stdin.resume();
 		process.stdin.setEncoding('utf8');
 
+		this.stdinKeyBuffer = new StdinKeyBuffer(keyName => {
+			this.routeKey(keyName);
+		});
+
 		this.inputHandler = (data: string): void => {
-			const keyName = parseKeyName(data);
-			if (!keyName) return;
-
-			if (this.searchOverlay.active) {
-				void this.handleSearchKey(keyName);
-				return;
-			}
-
-			if (this.libraryOverlay.active) {
-				void this.handleLibraryKey(keyName);
-				return;
-			}
-
-			if (this.settingsOverlay.active) {
-				this.handleSettingsKey(keyName);
-				return;
-			}
-
-			if (keyName === 'Ctrl+C') {
-				this.stop();
-				process.exit(0);
-				return;
-			}
-
-			switch (keyName) {
-				case ' ':
-					this.options.onTogglePlay?.();
-					break;
-				case 'd':
-					this.options.onToggleDisco?.();
-					break;
-				case 'f':
-					void this.options.onToggleFavoriteCurrent?.();
-					break;
-				case 'l':
-					openLibraryMenu(this.libraryOverlay);
-					break;
-				case 'p':
-					openPlaylistPicker(this.libraryOverlay);
-					break;
-				case 'e':
-					void this.runLibraryAction(() => this.options.onPlayAllFavorites?.());
-					break;
-				case 'Shift+S':
-					this.options.onToggleShuffle?.();
-					break;
-				case 'r':
-					this.options.onToggleRepeat?.();
-					break;
-				case 'Ctrl+,': {
-					openSettingsOverlay(this.settingsOverlay);
-					break;
-				}
-				case 'up':
-					this.options.onVolumeUp?.();
-					break;
-				case 'down':
-					this.options.onVolumeDown?.();
-					break;
-				case 'right':
-					this.options.onNext?.();
-					break;
-				case 'left':
-					this.options.onPrevious?.();
-					break;
-				case '/':
-				case 's':
-					openSearchOverlay(this.searchOverlay);
-					break;
-				case 'q':
-				case 'escape':
-					this.stop();
-					process.exit(0);
-					break;
-			}
+			this.stdinKeyBuffer?.push(data);
 		};
 
 		process.stdin.on('data', this.inputHandler);
@@ -478,6 +423,81 @@ export class ImmersiveEngine {
 				this.stop();
 			};
 			process.on('exit', this.exitHandler);
+		}
+	}
+
+	private routeKey(keyName: string): void {
+		if (this.searchOverlay.active) {
+			void this.handleSearchKey(keyName);
+			return;
+		}
+
+		if (this.libraryOverlay.active) {
+			void this.handleLibraryKey(keyName);
+			return;
+		}
+
+		if (this.settingsOverlay.active) {
+			this.handleSettingsKey(keyName);
+			return;
+		}
+
+		if (keyName === 'Ctrl+C') {
+			this.stop();
+			process.exit(0);
+			return;
+		}
+
+		switch (keyName) {
+			case ' ':
+				this.options.onTogglePlay?.();
+				break;
+			case 'd':
+				this.options.onToggleDisco?.();
+				break;
+			case 'f':
+				void this.options.onToggleFavoriteCurrent?.();
+				break;
+			case 'l':
+				openLibraryMenu(this.libraryOverlay);
+				break;
+			case 'p':
+				openPlaylistPicker(this.libraryOverlay);
+				break;
+			case 'e':
+				void this.runLibraryAction(() => this.options.onPlayAllFavorites?.());
+				break;
+			case 'Shift+S':
+				this.options.onToggleShuffle?.();
+				break;
+			case 'r':
+				this.options.onToggleRepeat?.();
+				break;
+			case 'Ctrl+,':
+			case ',':
+				openSettingsOverlay(this.settingsOverlay);
+				break;
+			case 'up':
+				this.options.onVolumeUp?.();
+				break;
+			case 'down':
+				this.options.onVolumeDown?.();
+				break;
+			case 'right':
+				this.options.onNext?.();
+				break;
+			case 'left':
+				this.options.onPrevious?.();
+				break;
+			case '/':
+			case 's':
+				openSearchOverlay(this.searchOverlay);
+				break;
+			case 'q':
+			case 'escape':
+				this.stop();
+				process.exit(0);
+				break;
 		}
 	}
 
@@ -563,20 +583,65 @@ export class ImmersiveEngine {
 	}
 
 	private handleSettingsKey(key: string): void {
+		if (this.settingsOverlay.textEdit) {
+			const editAction = handleSettingsTextEditInput(this.settingsOverlay, key);
+			if (editAction === 'save') {
+				const field = this.settingsOverlay.textEdit;
+				if (field) {
+					const message = this.options.onSettingsTextSave?.(
+						field,
+						this.settingsOverlay.textDraft,
+					);
+					if (message) {
+						this.settingsOverlay.status = message;
+						return;
+					}
+					this.settingsOverlay.textEdit = null;
+					this.settingsOverlay.textDraft = '';
+					this.settingsOverlay.status = 'Saved';
+				}
+			}
+			return;
+		}
+
 		const rows = this.options.getSettingsRows?.() ?? [];
 		const action = handleSettingsInput(this.settingsOverlay, key, rows.length);
 
-		if (action === 'cycle') {
-			this.options.onSettingsCycle?.(this.settingsOverlay.selectedIndex);
+		if (action === 'cycle' || action === 'navigate') {
+			const message = this.options.onSettingsCycle?.(
+				this.settingsOverlay.selectedIndex,
+			);
+			if (message) {
+				this.settingsOverlay.status = message;
+			}
+			return;
+		}
+
+		if (action === 'begin_text') {
+			const field = getSelectedTextField(this.settingsOverlay);
+			if (field) {
+				const draft = this.options.getSettingsTextDraft?.(field) ?? '';
+				beginSettingsTextEdit(this.settingsOverlay, field, draft);
+			}
 		}
 	}
 
 	private async handleSearchKey(key: string): Promise<void> {
+		if (this.searchOverlay.filterEdit) {
+			handleFilterEditInput(this.searchOverlay, key);
+			return;
+		}
+
 		if (this.searchOverlay.phase === 'query') {
+			if (handleSearchQueryMetaKey(this.searchOverlay, key)) {
+				return;
+			}
+
 			const action = handleSearchQueryInput(this.searchOverlay, key);
 			if (action === 'cancel') {
 				return;
 			}
+
 			if (action !== 'submit' || !this.options.onSearch) {
 				return;
 			}
@@ -585,16 +650,27 @@ export class ImmersiveEngine {
 			this.searchOverlay.status = 'Searching...';
 
 			try {
-				const result = await this.options.onSearch(query);
+				const result = await this.options.onSearch({
+					query,
+					type: this.searchOverlay.searchType,
+					limit: this.searchOverlay.searchLimit,
+				});
 				if (result.results.length === 0) {
 					this.searchOverlay.status = result.message ?? 'No results found';
 					return;
 				}
+
 				setSearchResults(this.searchOverlay, result.results);
+				this.searchOverlay.status = buildSearchHeaderLine(this.searchOverlay);
 			} catch (error) {
 				this.searchOverlay.status =
 					error instanceof Error ? error.message : 'Search failed';
 			}
+
+			return;
+		}
+
+		if (handleSearchResultsMetaKey(this.searchOverlay, key)) {
 			return;
 		}
 
@@ -623,6 +699,18 @@ export class ImmersiveEngine {
 			} catch (error) {
 				this.searchOverlay.status =
 					error instanceof Error ? error.message : 'Favorite failed';
+			}
+			return;
+		}
+
+		if (action === 'download' && selected) {
+			this.searchOverlay.status = 'Starting download...';
+			try {
+				const message = await this.options.onDownloadSearchResult?.(selected);
+				this.searchOverlay.status = message ?? 'Download finished';
+			} catch (error) {
+				this.searchOverlay.status =
+					error instanceof Error ? error.message : 'Download failed';
 			}
 			return;
 		}
@@ -666,6 +754,9 @@ export class ImmersiveEngine {
 				process.stdin.off('data', this.inputHandler);
 				this.listenersRemoved = true;
 			}
+
+			this.stdinKeyBuffer?.dispose();
+			this.stdinKeyBuffer = null;
 
 			if (this.resizeHandler) {
 				process.stdout.off('resize', this.resizeHandler);
@@ -984,10 +1075,15 @@ function renderControls(
 	let controls = '';
 
 	if (searchOverlay.active) {
-		controls =
-			searchOverlay.phase === 'query'
-				? '[Enter] Search   [Esc] Cancel   [Backspace] Delete'
-				: '[↑↓] Select   [Enter] Play   [M] Mix   [F] Favorite   [Esc] Back';
+		if (searchOverlay.filterEdit) {
+			controls = '[Enter] Save filter   [Esc] Cancel   [Backspace] Delete';
+		} else if (searchOverlay.phase === 'query') {
+			controls =
+				'[Tab] Type   [Ctrl+A] Artist   [Ctrl+L] Album   [+/−] Limit   [Enter] Search   [Esc] Cancel';
+		} else {
+			controls =
+				'[↑↓] Select   [Enter] Play   [Shift+D] Download   [M] Mix   [F] Favorite   [Ctrl+A/L] Filter   [Esc] Back';
+		}
 	} else if (libraryOverlay.active) {
 		controls =
 			libraryOverlay.view === 'menu'
@@ -1025,32 +1121,60 @@ function renderSearchOverlay(
 		return;
 	}
 
-	const boxH = Math.min(Math.max(8, Math.floor(height * 0.45)), height - 6);
+	const boxH = Math.min(Math.max(10, Math.floor(height * 0.55)), height - 6);
 	const boxY = Math.max(2, Math.floor((height - boxH) / 2));
-	const boxW = Math.min(width - 4, 72);
+	const boxW = Math.min(width - 4, 90);
 	const boxX = Math.floor((width - boxW) / 2);
 
 	fb.drawRect(boxX, boxY, boxW, boxH, null, null, 'single');
 	fb.setText(boxX + 2, boxY, ' SEARCH ', null, null, {bold: true});
 
 	if (overlay.phase === 'query') {
-		const prompt = `Query: ${overlay.query}_`;
-		fb.setText(boxX + 2, boxY + 2, truncateText(prompt, boxW - 4), null, null);
+		if (overlay.filterEdit) {
+			const prompt = `Filter ${overlay.filterEdit}: ${overlay.filterDraft}_`;
+			fb.setText(
+				boxX + 2,
+				boxY + 2,
+				truncateText(prompt, boxW - 4),
+				null,
+				null,
+			);
+		} else {
+			const prompt = `Query: ${overlay.query}_`;
+			fb.setText(
+				boxX + 2,
+				boxY + 2,
+				truncateText(prompt, boxW - 4),
+				null,
+				null,
+			);
+			const meta = `${formatSearchTypeLabel(overlay.searchType)} · limit ${overlay.searchLimit}`;
+			fb.setText(boxX + 2, boxY + 3, truncateText(meta, boxW - 4), null, null, {
+				dim: true,
+			});
+		}
+
 		if (overlay.status) {
 			fb.setText(
 				boxX + 2,
-				boxY + 3,
+				boxY + 4,
 				truncateText(overlay.status, boxW - 4),
 				null,
 				null,
 				{dim: true},
 			);
 		}
+
 		return;
 	}
 
+	const header = buildSearchHeaderLine(overlay);
+	fb.setText(boxX + 2, boxY + 1, truncateText(header, boxW - 4), null, null, {
+		dim: true,
+	});
+
 	const listTop = boxY + 2;
-	const maxLines = boxH - 4;
+	const maxLines = boxH - 5;
 	const start = Math.max(
 		0,
 		Math.min(
@@ -1064,10 +1188,11 @@ function renderSearchOverlay(
 		const result = visible[i];
 		if (!result) continue;
 		const index = start + i;
-		const prefix = getSearchResultPrefix(result.type);
-		const label = getSearchResultLabel(result);
 		const marker = index === overlay.selectedIndex ? '>' : ' ';
-		const line = truncateText(`${marker} ${prefix} ${label}`, boxW - 4);
+		const line = truncateText(
+			`${marker} ${formatSearchResultLine(result, boxW - 6)}`,
+			boxW - 4,
+		);
 		fb.setText(
 			boxX + 2,
 			listTop + i,
@@ -1182,13 +1307,45 @@ function renderSettingsOverlay(
 		return;
 	}
 
-	const boxH = Math.min(Math.max(10, rows.length + 4), height - 6);
-	const boxY = Math.max(2, Math.floor((height - boxH) / 2));
-	const boxW = Math.min(width - 4, 56);
+	const boxH = Math.min(Math.max(14, Math.floor(height * 0.72)), height - 4);
+	const boxY = Math.max(1, Math.floor((height - boxH) / 2));
+	const boxW = Math.min(width - 4, 64);
 	const boxX = Math.floor((width - boxW) / 2);
 
 	fb.drawRect(boxX, boxY, boxW, boxH, null, null, 'single');
 	fb.setText(boxX + 2, boxY, ' SETTINGS ', null, null, {bold: true});
+
+	if (overlay.textEdit) {
+		const row = rows[overlay.selectedIndex];
+		const label = row?.label ?? overlay.textEdit;
+		fb.setText(
+			boxX + 2,
+			boxY + 2,
+			truncateText(`${label}: ${overlay.textDraft}`, boxW - 4),
+			null,
+			null,
+			{bold: true},
+		);
+		fb.setText(
+			boxX + 2,
+			boxY + boxH - 3,
+			'Enter save · Esc cancel',
+			null,
+			null,
+			{dim: true},
+		);
+		if (overlay.status) {
+			fb.setText(
+				boxX + 2,
+				boxY + boxH - 2,
+				truncateText(overlay.status, boxW - 4),
+				null,
+				null,
+				{dim: true},
+			);
+		}
+		return;
+	}
 
 	if (rows.length === 0) {
 		fb.setText(boxX + 2, boxY + 2, 'No settings available', null, null, {
@@ -1197,20 +1354,42 @@ function renderSettingsOverlay(
 		return;
 	}
 
-	for (let i = 0; i < rows.length; i++) {
-		const row = rows[i];
+	const listTop = boxY + 2;
+	const footerRows = 2;
+	const maxLines = Math.max(1, boxH - footerRows - 3);
+	const start = Math.max(
+		0,
+		Math.min(
+			overlay.selectedIndex - Math.floor(maxLines / 2),
+			Math.max(0, rows.length - maxLines),
+		),
+	);
+	const visible = rows.slice(start, start + maxLines);
+
+	for (let i = 0; i < visible.length; i++) {
+		const row = visible[i];
 		if (!row) continue;
-		const marker = i === overlay.selectedIndex ? '>' : ' ';
+		const index = start + i;
+		const marker = index === overlay.selectedIndex ? '>' : ' ';
 		const line = truncateText(`${marker} ${row.label}: ${row.value}`, boxW - 4);
 		fb.setText(
 			boxX + 2,
-			boxY + 2 + i,
+			listTop + i,
 			line,
 			null,
 			null,
-			i === overlay.selectedIndex ? {bold: true} : {dim: true},
+			index === overlay.selectedIndex ? {bold: true} : {dim: true},
 		);
 	}
+
+	fb.setText(
+		boxX + 2,
+		boxY + boxH - 3,
+		'Enter cycle/edit · Esc close',
+		null,
+		null,
+		{dim: true},
+	);
 
 	if (overlay.status) {
 		fb.setText(

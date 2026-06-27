@@ -210,6 +210,12 @@ dist/ymc-win32.exe
 | Key        | Action                                       |
 | ---------- | -------------------------------------------- |
 | `/` or `S` | Open search overlay                          |
+| `Tab`      | Cycle search type (query view)               |
+| `Ctrl+A`   | Edit artist filter                           |
+| `Ctrl+L`   | Edit album filter                            |
+| `+`        | Increase search result limit (query view)    |
+| `-`        | Decrease search result limit (query view)    |
+| `Shift+D`  | Download selected search result              |
 | `Space`    | Play / Pause                                 |
 | `F`        | Toggle favorite (current track or search)    |
 | `L`        | Library menu (playlists, favorites)          |
@@ -217,7 +223,7 @@ dist/ymc-win32.exe
 | `E`        | Play all favorites                           |
 | `Shift+S`  | Toggle shuffle                               |
 | `R`        | Cycle repeat (off → all → one)               |
-| `Ctrl+,`   | Open settings overlay                        |
+| `,`        | Open settings overlay (Ctrl+, on WT also)    |
 | `M`        | Create mix from search result (results view) |
 | `D`        | Toggle disco mode                            |
 | `↑` / `↓`  | Volume up / down (player) or navigate lists  |

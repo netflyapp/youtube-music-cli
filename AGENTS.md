@@ -240,7 +240,7 @@ youtube-music-cli --win32            # Windows immersive mode (Bun native)
 ## Learned Workspace Facts
 
 - Win32 immersive mode (`--win32`, `bun run dev:win32`, `build:win32`) lives under `source/immersive/` and is separate from the Ink TUI
-- Immersive library and search overlays share helpers in `source/immersive/actions/playback-actions.ts`; shortcuts include L/P/E (library), Shift+S (shuffle), R (repeat), Ctrl+, (settings), M (mix), and F (favorite)
+- Immersive library and search overlays share helpers in `source/immersive/actions/playback-actions.ts`; shortcuts include L/P/E (library), Shift+S (shuffle), R (repeat), `,` / Ctrl+, (settings), Tab/Ctrl+A/Ctrl+L/+/- (search filters and limit), Shift+D (download), M (mix), and F (favorite)
 - Windows FFI uses only `@bun-win32/user32` and `@bun-win32/kernel32`, dynamically imported via `source/immersive/native/win32-ffi.ts`
 - `@bun-win32/*` major upgrades must bump user32 and kernel32 together (shared `@bun-win32/core` 2.x); `@bun-win32/combase` and `@bun-win32/shell32` are not used
 - Run immersive AVA tests with `--timeout=60s` — default 30s can timeout when heavy modules load

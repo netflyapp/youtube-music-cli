@@ -12,6 +12,7 @@ import type {
 	SearchResult,
 	Track,
 } from '../../types/youtube-music.types.ts';
+import {formatTime, truncate} from '../../utils/format.ts';
 
 export interface ImmersiveMusicService {
 	search(
@@ -259,4 +260,28 @@ export function getSearchResultPrefix(type: SearchResult['type']): string {
 		default:
 			return '?';
 	}
+}
+
+export function formatSearchResultLine(
+	result: SearchResult,
+	maxWidth: number,
+): string {
+	const prefix = getSearchResultPrefix(result.type);
+	const typeTag = result.type.toUpperCase().padEnd(8);
+	const title = getSearchResultLabel(result);
+	let extra = '';
+
+	if (result.type === 'song' && 'title' in result.data) {
+		const track = result.data as Track;
+		const artist = track.artists.map(entry => entry.name).join(', ');
+		if (artist) {
+			extra += ` · ${truncate(artist, 22)}`;
+		}
+
+		if (track.duration) {
+			extra += ` · ${formatTime(track.duration)}`;
+		}
+	}
+
+	return truncate(`${prefix} ${typeTag} ${title}${extra}`, maxWidth);
 }

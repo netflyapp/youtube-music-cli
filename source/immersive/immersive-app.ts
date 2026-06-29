@@ -19,6 +19,10 @@ import {
 	playSearchResult,
 } from './actions/playback-actions.ts';
 import {
+	shouldDebounceAdvance,
+	shouldSyncPauseFromMpv,
+} from './state/playback-sync.ts';
+import {
 	advanceQueue,
 	createInitialImmersiveState,
 	cycleRepeat,
@@ -214,6 +218,8 @@ export async function startImmersiveApp(
 	let engine: ImmersiveEngine | null = null;
 	let eofTimestamp = 0;
 	let playbackStartTimestamp = 0;
+	let isAdvancing = false;
+	let lastAdvanceAt = 0;
 
 	const playTrackAtIndex = async (index: number): Promise<void> => {
 		const track = state.queue[index];
@@ -226,6 +232,10 @@ export async function startImmersiveApp(
 
 		const trackUrl = trackYouTubeUrl(track);
 		const notificationsEnabled = config.get('notifications') ?? false;
+
+		isAdvancing = true;
+		playbackStartTimestamp = Date.now();
+		state.currentTime = 0;
 
 		try {
 			const bgState = config.getBackgroundPlaybackState();
@@ -249,7 +259,6 @@ export async function startImmersiveApp(
 			}
 
 			playerService.resume();
-			playbackStartTimestamp = Date.now();
 			state.isPlaying = true;
 
 			if (track.duration) {
@@ -268,6 +277,8 @@ export async function startImmersiveApp(
 			const message =
 				error instanceof Error ? error.message : 'Playback failed';
 			showTrackChangeToast('Playback error', message);
+		} finally {
+			isAdvancing = false;
 		}
 	};
 
@@ -323,6 +334,15 @@ export async function startImmersiveApp(
 		}
 	};
 
+	const handleNextFromEof = async (): Promise<void> => {
+		const now = Date.now();
+		if (shouldDebounceAdvance(lastAdvanceAt, now)) {
+			return;
+		}
+		lastAdvanceAt = now;
+		await handleNext();
+	};
+
 	const handlePrevious = async (): Promise<void> => {
 		const track = previousQueue(state);
 		if (track) {
@@ -346,17 +366,18 @@ export async function startImmersiveApp(
 				void playTrackAtIndex(state.queueIndex);
 				return;
 			}
-			void handleNext();
+			void handleNextFromEof();
 		}
 
 		if (event.paused !== undefined) {
-			if (event.paused && Date.now() - eofTimestamp < 2000) {
-				return;
-			}
 			if (
-				event.paused &&
-				Date.now() - playbackStartTimestamp < 4000 &&
-				state.currentTime < 1
+				!shouldSyncPauseFromMpv({
+					paused: event.paused,
+					isAdvancing,
+					eofTimestamp,
+					playbackStartTimestamp,
+					currentTime: state.currentTime,
+				})
 			) {
 				return;
 			}

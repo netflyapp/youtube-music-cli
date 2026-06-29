@@ -137,6 +137,66 @@ test('queue-state supports shuffle and repeat-all', async t => {
 	t.is(advanceQueue(state)?.videoId, 'a');
 });
 
+test('queue-state shuffle with repeat-all at end picks a different track', async t => {
+	const {advanceQueue, createInitialImmersiveState, setQueue} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState({shuffle: true, repeat: 'all'});
+	setQueue(state, [
+		{videoId: 'a', title: 'A', artists: []},
+		{videoId: 'b', title: 'B', artists: []},
+		{videoId: 'c', title: 'C', artists: []},
+	]);
+	state.queueIndex = 2;
+	state.currentTrack = state.queue[2] ?? null;
+
+	const next = advanceQueue(state);
+	t.truthy(next);
+	t.not(next?.videoId, 'c');
+	t.true(['a', 'b'].includes(next?.videoId ?? ''));
+});
+
+test('playback-sync suppresses pause during track advance and startup', async t => {
+	const {ADVANCE_DEBOUNCE_MS, shouldDebounceAdvance, shouldSyncPauseFromMpv} =
+		await import('../source/immersive/state/playback-sync.ts');
+
+	const base = {
+		paused: true,
+		isAdvancing: false,
+		eofTimestamp: 0,
+		playbackStartTimestamp: 0,
+		currentTime: 0,
+		now: 10_000,
+	};
+
+	t.false(shouldSyncPauseFromMpv({...base, isAdvancing: true}));
+	t.false(
+		shouldSyncPauseFromMpv({
+			...base,
+			eofTimestamp: 9000,
+		}),
+	);
+	t.false(
+		shouldSyncPauseFromMpv({
+			...base,
+			playbackStartTimestamp: 3000,
+			currentTime: 0,
+		}),
+	);
+	t.true(
+		shouldSyncPauseFromMpv({
+			...base,
+			eofTimestamp: 0,
+			playbackStartTimestamp: 0,
+			currentTime: 5,
+		}),
+	);
+	t.true(shouldSyncPauseFromMpv({...base, paused: false}));
+
+	t.true(shouldDebounceAdvance(0, ADVANCE_DEBOUNCE_MS - 1));
+	t.false(shouldDebounceAdvance(0, ADVANCE_DEBOUNCE_MS));
+});
+
 test('queue-state cycles repeat modes', async t => {
 	const {createInitialImmersiveState, cycleRepeat} =
 		await import('../source/immersive/state/queue-state.ts');
@@ -436,10 +496,16 @@ test('library overlay navigates menu, playlists, and favorites', async t => {
 });
 
 test('playback-actions dedupe tracks and favorites manager toggles', async t => {
+	const {mkdtempSync, rmSync} = await import('node:fs');
+	const {tmpdir} = await import('node:os');
+	const {join} = await import('node:path');
 	const {dedupeTracks} =
 		await import('../source/immersive/actions/playback-actions.ts');
-	const {FavoritesManager, resetFavoritesManagerForTests} =
-		await import('../source/services/favorites/favorites.service.ts');
+	const {
+		FavoritesManager,
+		resetFavoritesManagerForTests,
+		setFavoritesFilePathForTests,
+	} = await import('../source/services/favorites/favorites.service.ts');
 
 	const deduped = dedupeTracks([
 		{videoId: 'a', title: 'A', artists: []},
@@ -447,6 +513,15 @@ test('playback-actions dedupe tracks and favorites manager toggles', async t => 
 		{videoId: 'b', title: 'B', artists: []},
 	]);
 	t.is(deduped.length, 2);
+
+	const tempDir = mkdtempSync(join(tmpdir(), 'ymc-favorites-test-'));
+	const favoritesFile = join(tempDir, 'favorites.json');
+	setFavoritesFilePathForTests(favoritesFile);
+	t.teardown(() => {
+		resetFavoritesManagerForTests();
+		setFavoritesFilePathForTests(null);
+		rmSync(tempDir, {force: true, recursive: true});
+	});
 
 	resetFavoritesManagerForTests();
 	const manager = new FavoritesManager();

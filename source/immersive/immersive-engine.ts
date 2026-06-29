@@ -16,7 +16,11 @@ import {
 	enableDpiAwareness,
 	onTerminalResize,
 } from './native/console.ts';
-import {createTrayIcon, removeTrayIcon} from './native/tray.ts';
+import {
+	createTrayIcon,
+	removeTrayIcon,
+	setTrayActionHandler,
+} from './native/tray.ts';
 import type {RGB} from './renderer/ansi-codes.ts';
 import type {Playlist, SearchResult} from '../types/youtube-music.types.ts';
 import {StdinKeyBuffer} from './input/stdin-buffer.ts';
@@ -232,6 +236,16 @@ export class ImmersiveEngine {
 
 		if (this.options.enableTray) {
 			const trackInfo = this.resolveTrackInfo(state);
+			setTrayActionHandler(action => {
+				if (action === 'settings') {
+					openSettingsOverlay(this.settingsOverlay);
+					return;
+				}
+				if (action === 'exit') {
+					this.stop();
+					process.exit(0);
+				}
+			});
 			createTrayIcon({
 				id: 'youtube-music-cli',
 				icon: '',
@@ -477,10 +491,11 @@ export class ImmersiveEngine {
 			case ',':
 				openSettingsOverlay(this.settingsOverlay);
 				break;
-			case 'up':
+			// KEYBINDINGS.VOLUME_UP / VOLUME_DOWN (constants.ts): = and + map to '+'
+			case '+':
 				this.options.onVolumeUp?.();
 				break;
-			case 'down':
+			case '-':
 				this.options.onVolumeDown?.();
 				break;
 			case 'right':
@@ -767,6 +782,7 @@ export class ImmersiveEngine {
 			exitAltBuffer();
 
 			if (this.options.enableTray) {
+				setTrayActionHandler(null);
 				removeTrayIcon();
 			}
 		}

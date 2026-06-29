@@ -236,11 +236,15 @@ youtube-music-cli --win32            # Windows immersive mode (Bun native)
 - Do not create git commits unless the user explicitly asks
 - Verify build, test, and lint pass before declaring work complete
 - Prefer direct communication; avoid filler acknowledgments and apologies
+- Win32 immersive player volume should match Ink TUI: `=`/`+` for up and `-` for down (not arrow keys)
 
 ## Learned Workspace Facts
 
 - Win32 immersive mode (`--win32`, `bun run dev:win32`, `build:win32`) lives under `source/immersive/` and is separate from the Ink TUI
-- Immersive library and search overlays share helpers in `source/immersive/actions/playback-actions.ts`; shortcuts include L/P/E (library), Shift+S (shuffle), R (repeat), `,` / Ctrl+, (settings), Tab/Ctrl+A/Ctrl+L/+/- (search filters and limit), Shift+D (download), M (mix), and F (favorite)
+- Immersive library and search overlays share helpers in `source/immersive/actions/playback-actions.ts`; shortcuts include `=`/`+`/`-` (player volume), L/P/E (library), Shift+S (shuffle), R (repeat), `,` / Ctrl+, (settings), Tab/Ctrl+A/Ctrl+L/+/- (search filters and limit), Shift+D (download), M (mix), and F (favorite); tray right-click offers Settings and Exit
+- Immersive settings overlay mirrors Ink TUI with 23 rows (`IMMERSIVE_SETTINGS_COUNT` in `source/immersive/settings/settings-items.ts`)
+- `playback-actions.ts` types music calls via `ImmersiveMusicService` instead of importing `getMusicService()`, so immersive AVA tests avoid loading the heavy YouTube API module
+- Immersive stdin uses raw `process.stdin.on('data')` without escape buffering; `Ctrl+,` on Windows Terminal may need `\x0c` plus CSI u sequences in `key-parser.ts`
 - Windows FFI uses only `@bun-win32/user32` and `@bun-win32/kernel32`, dynamically imported via `source/immersive/native/win32-ffi.ts`
 - `@bun-win32/*` major upgrades must bump user32 and kernel32 together (shared `@bun-win32/core` 2.x); `@bun-win32/combase` and `@bun-win32/shell32` are not used
 - Run immersive AVA tests with `--timeout=60s` — default 30s can timeout when heavy modules load

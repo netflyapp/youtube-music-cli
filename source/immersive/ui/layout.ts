@@ -83,6 +83,7 @@ export function buildModeStatusLine(state: {
 export function buildPlayerShortcutLine(maxWidth: number): string {
 	const required = [
 		'[←→] Track',
+		'[=/-] Vol',
 		'[Space] Play',
 		'[Shift+S] Shuffle',
 		'[R] Repeat',

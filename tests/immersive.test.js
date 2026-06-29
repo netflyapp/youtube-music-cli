@@ -20,6 +20,8 @@ test('parseKeyName maps arrow keys and control keys', async t => {
 	t.is(parseKeyName('\x01'), 'Ctrl+A');
 	t.is(parseKeyName('\x0c'), 'Ctrl+L');
 	t.is(parseKeyName('+'), '+');
+	t.is(parseKeyName('='), '+');
+	t.is(parseKeyName('-'), '-');
 	t.is(parseKeyName('\x1b[44;5u'), 'Ctrl+,');
 	t.is(parseKeyName('\x1b[44;5;1u'), 'Ctrl+,');
 	t.is(parseKeyName('\x1c'), null);
@@ -195,6 +197,26 @@ test('immersive settings items match TUI row count and cycle values', async t =>
 		onSleepTimerExpire: () => {},
 	});
 	t.true(message?.includes('Subtitles'));
+});
+
+test('tray helpers parse actions and resolve icon path', async t => {
+	const {parseTrayActionLine, resolveTrayIconPath} =
+		await import('../source/immersive/native/tray.ts');
+
+	t.is(parseTrayActionLine('ACTION:settings'), 'settings');
+	t.is(parseTrayActionLine('ACTION:exit'), 'exit');
+	t.is(parseTrayActionLine('TOOLTIP:foo'), null);
+
+	const iconPath = resolveTrayIconPath();
+	t.true(iconPath === null || iconPath.endsWith('icon.ico'));
+});
+
+test('player shortcut line includes volume keys', async t => {
+	const {buildPlayerShortcutLine} =
+		await import('../source/immersive/ui/layout.ts');
+
+	const line = buildPlayerShortcutLine(120);
+	t.true(line.includes('[=/-] Vol'));
 });
 
 test('HybridAudioSource reacts to playback state', async t => {

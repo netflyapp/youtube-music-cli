@@ -213,6 +213,8 @@ dist/ymc-win32.exe
 | `Tab`      | Cycle search type (query view)               |
 | `Ctrl+A`   | Edit artist filter                           |
 | `Ctrl+L`   | Edit album filter                            |
+| `=` / `+`  | Volume up (+5%, player view)                 |
+| `-`        | Volume down (-5%, player view)               |
 | `+`        | Increase search result limit (query view)    |
 | `-`        | Decrease search result limit (query view)    |
 | `Shift+D`  | Download selected search result              |
@@ -226,14 +228,14 @@ dist/ymc-win32.exe
 | `,`        | Open settings overlay (Ctrl+, on WT also)    |
 | `M`        | Create mix from search result (results view) |
 | `D`        | Toggle disco mode                            |
-| `↑` / `↓`  | Volume up / down (player) or navigate lists  |
+| `↑` / `↓`  | Navigate lists (overlays)                    |
 | `←` / `→`  | Previous / Next track                        |
 | `Enter`    | Select / play (overlays)                     |
 | `Esc`      | Back / close overlay                         |
 | `Q`        | Quit immersive mode                          |
 | `Ctrl+C`   | Force quit                                   |
 
-The footer shows shuffle/repeat/disco status on one line and prioritized shortcuts on the next. Random favorite is available from the library menu (`L`).
+The footer shows shuffle/repeat/disco status on one line and prioritized shortcuts on the next. Random favorite is available from the library menu (`L`). Right-click the system tray icon for **Settings** or **Exit** (uses `assets/icon.ico`).
 
 Global media keys (Alt+Media keys) also work when the terminal is unfocused on Windows with Bun runtime.
 

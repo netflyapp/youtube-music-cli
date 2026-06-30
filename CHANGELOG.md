@@ -1,3 +1,9 @@
+## [0.0.92](https://github.com/involvex/youtube-music-cli/compare/v0.0.91...v0.0.92) (2026-06-30)
+
+### Bug Fixes
+
+- **immersive:** keep favorites queue playing with shuffle and repeat-all ([fe7e133](https://github.com/involvex/youtube-music-cli/commit/fe7e133ac918fba76b23853a8c20908ef7b4f4b4))
+
 ## [0.0.91](https://github.com/involvex/youtube-music-cli/compare/v0.0.90...v0.0.91) (2026-06-29)
 
 ### Bug Fixes

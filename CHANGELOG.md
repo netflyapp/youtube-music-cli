@@ -1,3 +1,9 @@
+## [0.0.93](https://github.com/involvex/youtube-music-cli/compare/v0.0.92...v0.0.93) (2026-07-01)
+
+### Features
+
+- **immersive:** add Spotify-like autoplay for Win32 mode ([cc19e04](https://github.com/involvex/youtube-music-cli/commit/cc19e04ce440c1b1b0bc7641148b7e356eaeadc2))
+
 ## [0.0.92](https://github.com/involvex/youtube-music-cli/compare/v0.0.91...v0.0.92) (2026-06-30)
 
 ### Bug Fixes

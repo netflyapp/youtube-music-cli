@@ -1,3 +1,4 @@
+import type {RadioSeed} from '../../types/radio.types.ts';
 import type {Track} from '../../types/youtube-music.types.ts';
 
 export type RepeatMode = 'off' | 'all' | 'one';
@@ -14,6 +15,9 @@ export interface ImmersivePlayerState {
 	isDiscoMode: boolean;
 	shuffle: boolean;
 	repeat: RepeatMode;
+	autoplay: boolean;
+	radioIsActive: boolean;
+	radioSeed: RadioSeed | null;
 }
 
 export function createInitialImmersiveState(
@@ -31,6 +35,9 @@ export function createInitialImmersiveState(
 		isDiscoMode: false,
 		shuffle: false,
 		repeat: 'off',
+		autoplay: true,
+		radioIsActive: false,
+		radioSeed: null,
 		...overrides,
 	};
 }
@@ -102,6 +109,47 @@ export function addToQueue(state: ImmersivePlayerState, track: Track): void {
 	}
 }
 
+/** Append autoplay suggestions without reshuffling the active playback order. */
+export function appendTracksForAutoplay(
+	state: ImmersivePlayerState,
+	tracks: Track[],
+): number {
+	const existingIds = new Set(
+		state.queue.map(track => track.videoId).filter(Boolean),
+	);
+	let added = 0;
+
+	for (const track of tracks) {
+		if (!track.videoId || existingIds.has(track.videoId)) {
+			continue;
+		}
+
+		existingIds.add(track.videoId);
+		state.queue.push(track);
+		const newIndex = state.queue.length - 1;
+		if (state.shuffle && state.playbackOrder) {
+			state.playbackOrder.push(newIndex);
+		}
+		added++;
+	}
+
+	if (
+		added > 0 &&
+		state.shuffle &&
+		state.queue.length > 1 &&
+		!state.playbackOrder
+	) {
+		shuffleQueueOrder(state, state.queueIndex);
+	}
+
+	return added;
+}
+
+export function toggleAutoplay(state: ImmersivePlayerState): boolean {
+	state.autoplay = !state.autoplay;
+	return state.autoplay;
+}
+
 export function toggleShuffle(state: ImmersivePlayerState): boolean {
 	state.shuffle = !state.shuffle;
 	if (state.shuffle && state.queue.length > 1) {
@@ -121,6 +169,10 @@ export function cycleRepeat(state: ImmersivePlayerState): RepeatMode {
 
 function advanceShuffleQueue(state: ImmersivePlayerState): Track | null {
 	if (!state.playbackOrder || state.playbackOrder.length <= 1) {
+		if (state.queue.length <= 1) {
+			return null;
+		}
+
 		let randomIndex = state.queueIndex;
 		while (randomIndex === state.queueIndex) {
 			randomIndex = Math.floor(Math.random() * state.queue.length);

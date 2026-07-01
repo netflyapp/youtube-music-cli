@@ -15,6 +15,10 @@ import {
 } from '../services/player-state/player-state.service.ts';
 import {logger} from '../services/logger/logger.service.ts';
 import {shouldApplyMpvPauseSync} from '../services/player/mpv-event-policy.ts';
+import {
+	shouldPrefetchAutoplay,
+	shouldResumeAfterPrefetch,
+} from '../services/player/autoplay-coordinator.ts';
 import {getNotificationService} from '../services/notification/notification.service.ts';
 import {getScrobblingService} from '../services/scrobbling/scrobbling.service.ts';
 import {getDiscordRpcService} from '../services/discord/discord-rpc.service.ts';
@@ -787,29 +791,33 @@ function PlayerManager() {
 	const fetchedForRef = useRef<string | null>(null);
 	const isFetchingAutoplayRef = useRef(false);
 	useEffect(() => {
-		if (!state.autoplay || !state.currentTrack || !state.isPlaying) {
-			return;
-		}
-
-		if (state.repeat === 'all' || (state.shuffle && state.queue.length > 1)) {
-			return;
-		}
-
-		// In radio mode, fetch more aggressively (when ≤15 tracks ahead)
-		// In regular autoplay, only fetch when ≤5 tracks ahead
-		const tracksAheadThreshold = state.radioIsActive ? 15 : 5;
-		const tracksAhead = state.queue.length - state.queuePosition - 1;
-		if (tracksAhead > tracksAheadThreshold) return;
+		const autoplayState = {
+			autoplay: state.autoplay,
+			isPlaying: state.isPlaying,
+			repeat: state.repeat,
+			shuffle: state.shuffle,
+			queueLength: state.queue.length,
+			queuePosition: state.queuePosition,
+			currentTrackVideoId: state.currentTrack?.videoId ?? null,
+			radioIsActive: state.radioIsActive,
+		};
 
 		if (
-			fetchedForRef.current === state.currentTrack.videoId ||
-			isFetchingAutoplayRef.current
+			!shouldPrefetchAutoplay(autoplayState, {
+				fetchedForVideoId: fetchedForRef.current,
+				isFetching: isFetchingAutoplayRef.current,
+			})
 		) {
 			return;
 		}
 
-		const trackId = state.currentTrack.videoId;
-		const trackTitle = state.currentTrack.title;
+		const trackId = state.currentTrack!.videoId;
+		const trackTitle = state.currentTrack!.title;
+		const queueLengthBefore = state.queue.length;
+		const wasAtEndOfQueue = state.queuePosition >= queueLengthBefore - 1;
+		const progressBefore = state.progress;
+		const durationBefore = state.duration;
+
 		isFetchingAutoplayRef.current = true;
 		fetchedForRef.current = trackId;
 
@@ -836,28 +844,25 @@ function PlayerManager() {
 					},
 				);
 
-				// Check if we need to advance immediately (if we were stuck at the end)
-				// We check if the queue position was at the end of the *previous* queue length
-				// (current queue length - new suggestions length - 1)
-				const wasAtEndOfQueue = state.queuePosition >= state.queue.length - 1;
-
-				// Relaxed check: if we are near the end of the track (within 5s), trigger NEXT.
-				// We do NOT check !state.isPlaying because mpv might be in a weird state
-				// (idle but suppressed pause) if the track actually finished.
-				if (wasAtEndOfQueue && state.progress >= state.duration - 5) {
+				if (
+					shouldResumeAfterPrefetch(
+						wasAtEndOfQueue,
+						progressBefore,
+						durationBefore,
+					)
+				) {
 					logger.info(
 						'PlayerManager',
 						'Autoplay: resuming playback via freshly added suggestions',
 						{
-							progress: state.progress,
-							duration: state.duration,
+							progress: progressBefore,
+							duration: durationBefore,
 						},
 					);
 					dispatch({category: 'NEXT'});
 				}
 			})
 			.catch((error: unknown) => {
-				isFetchingAutoplayRef.current = false;
 				fetchedForRef.current = null;
 				logger.warn('PlayerManager', 'Autoplay: failed to fetch suggestions', {
 					error: error instanceof Error ? error.message : String(error),

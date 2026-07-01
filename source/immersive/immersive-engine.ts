@@ -127,6 +127,7 @@ export interface ImmersiveOptions {
 	onPlayRandomFavorite?: () => Promise<string | null>;
 	onToggleShuffle?: () => void;
 	onToggleRepeat?: () => void;
+	onToggleAutoplay?: () => void;
 	getSettingsRows?: () => SettingsRow[];
 	getSettingsTextDraft?: (field: SettingsTextField) => string;
 	onSettingsCycle?: (index: number) => string | null;
@@ -502,6 +503,9 @@ export class ImmersiveEngine {
 				break;
 			case 'Shift+S':
 				this.options.onToggleShuffle?.();
+				break;
+			case 'Shift+A':
+				this.options.onToggleAutoplay?.();
 				break;
 			case 'r':
 				this.options.onToggleRepeat?.();

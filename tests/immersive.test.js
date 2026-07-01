@@ -416,12 +416,15 @@ test('layout helpers compute regions and progress bars', async t => {
 		shuffle: true,
 		repeat: 'all',
 		isDiscoMode: false,
+		autoplay: true,
 	});
 	t.true(modeLine.includes('Shuffle ON'));
 	t.true(modeLine.includes('Repeat ALL'));
+	t.true(modeLine.includes('Autoplay ON'));
 
-	const shortcuts = buildPlayerShortcutLine(120);
+	const shortcuts = buildPlayerShortcutLine(160);
 	t.true(shortcuts.includes('[Shift+S] Shuffle'));
+	t.true(shortcuts.includes('[Shift+A] Autoplay'));
 	t.true(shortcuts.includes('[,] Settings'));
 });
 
@@ -649,4 +652,69 @@ test('getSearchResultLabel and prefix format results', async t => {
 	);
 	t.true(line.includes('Hello'));
 	t.true(line.includes('Artist'));
+});
+
+test('appendTracksForAutoplay appends without reshuffling playback order', async t => {
+	const {appendTracksForAutoplay, createInitialImmersiveState, setQueue} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState({shuffle: true});
+	setQueue(
+		state,
+		[
+			{videoId: 'a', title: 'A', artists: []},
+			{videoId: 'b', title: 'B', artists: []},
+		],
+		0,
+	);
+	const orderBefore = [...(state.playbackOrder ?? [])];
+
+	const added = appendTracksForAutoplay(state, [
+		{videoId: 'c', title: 'C', artists: []},
+		{videoId: 'a', title: 'A duplicate', artists: []},
+		{videoId: 'd', title: 'D', artists: []},
+	]);
+
+	t.is(added, 2);
+	t.is(state.queue.length, 4);
+	t.deepEqual(state.playbackOrder?.slice(0, orderBefore.length), orderBefore);
+	t.deepEqual(state.playbackOrder?.slice(orderBefore.length), [2, 3]);
+});
+
+test('appendTracksForAutoplay builds shuffle order from single-track queue', async t => {
+	const {appendTracksForAutoplay, createInitialImmersiveState, setQueue} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState({shuffle: true});
+	setQueue(state, [{videoId: 'a', title: 'A', artists: []}], 0);
+	t.is(state.playbackOrder, null);
+
+	const added = appendTracksForAutoplay(state, [
+		{videoId: 'b', title: 'B', artists: []},
+		{videoId: 'c', title: 'C', artists: []},
+	]);
+
+	t.is(added, 2);
+	t.is(state.playbackOrder?.length, 3);
+	t.is(state.playbackOrder?.[0], 0);
+});
+
+test('advanceQueue with shuffle on single track returns null', async t => {
+	const {advanceQueue, createInitialImmersiveState, setQueue} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState({shuffle: true});
+	setQueue(state, [{videoId: 'a', title: 'A', artists: []}], 0);
+	t.is(advanceQueue(state), null);
+});
+
+test('toggleAutoplay flips immersive autoplay flag', async t => {
+	const {createInitialImmersiveState, toggleAutoplay} =
+		await import('../source/immersive/state/queue-state.ts');
+
+	const state = createInitialImmersiveState();
+	t.true(state.autoplay);
+	t.false(toggleAutoplay(state));
+	t.false(state.autoplay);
+	t.true(toggleAutoplay(state));
 });

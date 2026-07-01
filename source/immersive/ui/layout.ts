@@ -121,12 +121,16 @@ export function buildModeStatusLine(state: {
 	shuffle: boolean;
 	repeat: 'off' | 'all' | 'one';
 	isDiscoMode: boolean;
+	autoplay: boolean;
+	radioIsActive?: boolean;
 }): string {
 	const shuffle = state.shuffle ? 'ON' : 'OFF';
 	const repeat =
 		state.repeat === 'all' ? 'ALL' : state.repeat === 'one' ? 'ONE' : 'OFF';
 	const disco = state.isDiscoMode ? 'ON' : 'OFF';
-	return `Shuffle ${shuffle} · Repeat ${repeat} · Disco ${disco}`;
+	const autoplay = state.autoplay ? 'ON' : 'OFF';
+	const radio = state.radioIsActive ? ' · Radio ON' : '';
+	return `Shuffle ${shuffle} · Repeat ${repeat} · Autoplay ${autoplay}${radio} · Disco ${disco}`;
 }
 
 export function buildPlayerShortcutLine(maxWidth: number): string {
@@ -142,7 +146,12 @@ export function buildPlayerShortcutLine(maxWidth: number): string {
 		'[/] Search',
 		'[Q] Quit',
 	];
-	const optional = ['[P] Playlists', '[E] Favorites', '[D] Disco'];
+	const optional = [
+		'[Shift+A] Autoplay',
+		'[P] Playlists',
+		'[E] Favorites',
+		'[D] Disco',
+	];
 
 	let line = required.join('  ');
 	for (const segment of optional) {

@@ -159,7 +159,7 @@ export default function ShortcutsBar() {
 					{playerState.repeat === 'one' ? ICONS.REPEAT_ONE : ICONS.REPEAT_ALL}{' '}
 					[R]
 				</Text>{' '}
-				• <Text color={autoplayColor}>{ICONS.AUTOPLAY} [Sft+A]</Text> •{' '}
+				• <Text color={autoplayColor}>{ICONS.AUTOPLAY} [Sft+T]</Text> •{' '}
 				<Text color={shortcutColor('radio')}>📡 [Shift+X]</Text> •{' '}
 				<Text color={theme.colors.text}>Releases [Sft+N]</Text> •{' '}
 				<Text color={theme.colors.text}>Genres [Sft+M]</Text> •{' '}

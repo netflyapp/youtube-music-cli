@@ -98,8 +98,8 @@ export const KEYBINDINGS = {
 	PLUGINS: ['p'],
 	DETACH: ['shift+q'],
 	RESUME_BACKGROUND: ['shift+r'],
-	AI_CHAT: ['a'],
-	AI_RECOMMENDATIONS: ['shift+a'],
+	AI_CHAT: ['ctrl+i'],
+	AI_RECOMMENDATIONS: ['ctrl+j'],
 	STATS_VIEW: ['o'],
 
 	// Radio
@@ -115,7 +115,7 @@ export const KEYBINDINGS = {
 	VOLUME_FINE_DOWN: ['shift+-'], // Fine-grained -1 step
 	SHUFFLE: ['shift+s'],
 	REPEAT: ['r'],
-	AUTOPLAY_TOGGLE: ['shift+a'],
+	AUTOPLAY_TOGGLE: ['shift+t'],
 	GAPLESS_TOGGLE: ['shift+g'],
 	CROSSFADE_CYCLE: ['shift+c'],
 	EQUALIZER_CYCLE: ['shift+e'],
@@ -135,7 +135,7 @@ export const KEYBINDINGS = {
 	UP: ['up', 'k'],
 	DOWN: ['down', 'j'],
 	SELECT: ['enter', 'return'],
-	BACK: ['escape'],
+	BACK: ['ctrl+escape', 'backspace'],
 
 	// Search
 	CLEAR_SEARCH: ['escape'],

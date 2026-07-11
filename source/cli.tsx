@@ -635,7 +635,7 @@ if (command === 'plugins') {
 							console.log(
 								` Update available: ${APP_VERSION} → ${result.latestVersion}`,
 							);
-							console.log('Run: npm install -g @involvex/youtube-music-cli');
+							console.log('Run: npm install -g @netflyapp/youtube-music-cli');
 							console.log('');
 						}
 					}

@@ -2,76 +2,64 @@
 
 # 🎵 youtube-music-cli
 
-A powerful Terminal User Interface (TUI) music player for YouTube Music
+**A blazing-fast Terminal User Interface (TUI) music player for YouTube Music**
+Built with React/Ink — keyboard-driven, plugin-extensible, works offline.
 
 <p align="center">
   <img src="assets/player-preview.gif" alt="youtube-music-cli terminal preview" width="800">
 </p>
 
-[![npm version](https://img.shields.io/npm/v/@involvex/youtube-music-cli.svg)](https://www.npmjs.com/package/@involvex/youtube-music-cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/@netflyapp/youtube-music-cli.svg?style=flat-square)](https://www.npmjs.com/package/@netflyapp/youtube-music-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Runtime-Bun%20%7C%20Node-black?style=flat-square&logo=bun)](https://bun.sh/)
+[![Fork of involvex/youtube-music-cli](https://img.shields.io/badge/Fork%20of-involvex%2Fyoutube--music--cli-orange?style=flat-square)](https://github.com/involvex/youtube-music-cli)
+[![Personal Use Only](https://img.shields.io/badge/Use-Personal%20%2F%20Hobby%20Only-red?style=flat-square)](DISCLAIMER.md)
 
-[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Plugins](#plugins) • [Documentation](https://involvex.github.io/youtube-music-cli)
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Keyboard Shortcuts](#️-keyboard-shortcuts) • [Configuration](#️-configuration) • [Plugins](#-plugins) • [Contributing](#-contributing)
 
 </div>
 
 ---
 
-## Features
+> **Fork notice:** This is a community fork of [involvex/youtube-music-cli](https://github.com/involvex/youtube-music-cli), maintained by [Miłosz Zając](https://github.com/netflyapp). It adds new features and bug fixes on top of the original work.
 
-- 🎨 **Beautiful TUI** - Rich terminal interface built with React and Ink
-- 🔍 **Search** - Find songs, albums, artists, and playlists
-- 📋 **Queue Management** - Build and manage your playback queue
-- ❤️ **Favorites** - Mark tracks as favorites with `f` and view them with `Shift+F`
-- 🔀 **Shuffle & Repeat** - Multiple playback modes
-- 🎚️ **Volume Control** - Fine-grained volume adjustment
-- 💡 **Smart Suggestions** - Discover related tracks
-- 🎨 **Themes** - Dark, Light, Midnight, Matrix themes
-- 🔌 **Plugin System** - Extend functionality with plugins
-- ⌨️ **Keyboard-Driven** - Efficient vim-style navigation
-- 🖥️ **Immersive Mode** - Fullscreen Windows TUI with audio visualizer and disco effects
-- 💾 **Downloads** - Save tracks/playlists/artists with `Shift+D`
-- 🏷️ **Metadata Tagging** - Auto-tag title/artist/album with optional cover art
-- ⚡️ **Shell Completions** - `ymc completions <bash|zsh|powershell|fish>` emits scripts you can source or save so the CLI (also available as `ymc`) tab-completes subcommands and flags
+> [!WARNING]
+> **Legal notice:** This is an independent hobby project, not affiliated with Google or YouTube. Using it likely violates [YouTube's Terms of Service](https://www.youtube.com/t/terms). It is intended **for personal, non-commercial use only** by people with an active YouTube Music subscription. You use this software entirely at your own risk. See [DISCLAIMER.md](DISCLAIMER.md) for full details.
 
-## Support the Project
+---
 
-If you find youtube-music-cli useful, consider supporting its development:
+## ✨ Features
 
-- ☕ [Buy Me a Coffee](https://buymeacoffee.com/involvex)
-- 🪙 [PayPal](https://paypal.me/involvex)
-- ⌨️ [GitHub Sponsors](https://github.com/sponsors/involvex?sponsor=1)
+| Feature | Description |
+|---|---|
+| 🎨 **Beautiful TUI** | Rich terminal interface built with React and Ink |
+| 🔍 **Search** | Find songs, albums, artists, and playlists instantly |
+| 📋 **Queue Management** | Build and manage your playback queue with ease |
+| ❤️ **Favorites** | Mark tracks with `f`, view them with `Shift+F` |
+| 🔀 **Shuffle & Repeat** | Multiple playback modes: off, all, one |
+| 🎚️ **Volume Control** | Fine-grained volume adjustment per-session |
+| 💡 **Smart Suggestions** | Discover related tracks and radio stations |
+| 🎨 **Themes** | Dark, Light, Midnight, Matrix — switch on the fly |
+| 🔌 **Plugin System** | Extend with adblock, lyrics, Last.fm scrobbling, Discord RPC |
+| ⌨️ **Keyboard-Driven** | Efficient vim-style navigation — no mouse needed |
+| 🖥️ **Immersive Mode** | Fullscreen Windows TUI with audio visualizer and disco effects |
+| 💾 **Downloads** | Save tracks/playlists/artists with `Shift+D`, auto-tagged with metadata |
+| 📴 **Offline Mode** | Cache tracks locally with LRU eviction, toggle with `Shift+O` |
+| 🏷️ **Metadata Tagging** | Auto-tag title/artist/album with optional cover art |
+| ⚡️ **Shell Completions** | Tab-complete via `ymc completions <bash\|zsh\|fish\|powershell>` |
+| 📊 **Listening Stats** | Track your listening habits with a built-in dashboard |
 
-Your support helps keep this project alive and improving!
+---
 
-## Roadmap
-
-Visit [`SUGGESTIONS.md`](SUGGESTIONS.md) for the full backlog and use `docs/roadmap.md` to understand the current implementation focus (crossfade + gapless playback) and the next steps planned for equalizer/enhancements. The roadmap doc also explains how to pick up work so reviewers and contributors remain aligned.
-
-## Prerequisites
+## 📋 Prerequisites
 
 **Required:**
-
-- [mpv](https://mpv.io/) - Media player for audio playback
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube audio extraction
-
-### Installing Prerequisites
+- [mpv](https://mpv.io/) — media player backend for audio playback
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — YouTube audio stream extraction
 
 <details>
-<summary><b>Windows</b></summary>
-
-```bash
-# With Scoop
-scoop install mpv yt-dlp
-
-# With Chocolatey
-choco install mpv yt-dlp
-```
-
-</details>
-
-<details>
-<summary><b>macOS</b></summary>
+<summary><b>🍎 macOS</b></summary>
 
 ```bash
 brew install mpv yt-dlp
@@ -80,12 +68,11 @@ brew install mpv yt-dlp
 </details>
 
 <details>
-<summary><b>Linux</b></summary>
+<summary><b>🐧 Linux</b></summary>
 
 ```bash
-# Ubuntu/Debian
-sudo apt install mpv
-pip install yt-dlp
+# Ubuntu / Debian
+sudo apt install mpv && pip install yt-dlp
 
 # Arch Linux
 sudo pacman -S mpv yt-dlp
@@ -96,414 +83,357 @@ sudo dnf install mpv yt-dlp
 
 </details>
 
-## Installation
-
-### Node.js (Recommended)
-
-Requires [Node.js](https://nodejs.org) 18+ installed.
+<details>
+<summary><b>🪟 Windows</b></summary>
 
 ```bash
-npm install -g @involvex/youtube-music-cli
+scoop install mpv yt-dlp   # Scoop (recommended)
+choco install mpv yt-dlp   # Chocolatey
+```
+
+</details>
+
+---
+
+## 🚀 Installation
+
+### npm (Recommended)
+
+Requires [Node.js](https://nodejs.org) 18+ or [Bun](https://bun.sh/) 1.0+.
+
+```bash
+npm install -g @netflyapp/youtube-music-cli
 ```
 
 ### Bun
 
 ```bash
-bun install -g @involvex/youtube-music-cli
+bun install -g @netflyapp/youtube-music-cli
 ```
 
-### Homebrew
+### Homebrew (macOS / Linux)
 
 ```bash
-brew tap involvex/youtube-music-cli https://github.com/involvex/youtube-music-cli.git
+brew tap netflyapp/youtube-music-cli https://github.com/netflyapp/youtube-music-cli.git
 brew install youtube-music-cli
-```
-
-### GitHub Releases
-
-```bash
-https://github.com/involvex/youtube-music-cli/releases
-```
-
-### Install Script (bash)
-
-```bash
-curl -fssl https://raw.githubusercontent.com/involvex/youtube-music-cli/main/scripts/install.sh | bash
-```
-
-### Install Script (PowerShell)
-
-```powershell
-iwr https://raw.githubusercontent.com/involvex/youtube-music-cli/main/scripts/install.ps1 | iex
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/involvex/youtube-music-cli.git
+git clone https://github.com/netflyapp/youtube-music-cli.git
 cd youtube-music-cli
-
-# With bun (recommended for development)
-bun install
-bun run build
-bun link
-
-# With npm
-npm install
-npm run build
-npm link
+bun install && bun run build && bun link
 ```
 
-## Usage
-
-### Interactive Mode
-
-Launch the TUI:
+### Quick Install Script
 
 ```bash
-youtube-music-cli
+# bash / zsh
+curl -fsSL https://raw.githubusercontent.com/netflyapp/youtube-music-cli/main/scripts/install.sh | bash
+
+# PowerShell (Windows)
+iwr https://raw.githubusercontent.com/netflyapp/youtube-music-cli/main/scripts/install.ps1 | iex
+```
+
+---
+
+## 🎮 Usage
+
+```bash
+youtube-music-cli   # or the short alias:
+ymc
 ```
 
 ### CLI Commands
 
 ```bash
-# Play a specific track
-youtube-music-cli play <video-id|youtube-url>
-
-# Search for music
-youtube-music-cli search "artist or song name"
-
-# Play a playlist
-youtube-music-cli playlist <playlist-id>
-
-# Get suggestions based on current track
-youtube-music-cli suggestions
-
-# Playback control
-youtube-music-cli pause
-youtube-music-cli resume
-youtube-music-cli skip
-youtube-music-cli back
+ymc play <video-id|youtube-url>   # play a specific track
+ymc search "artist or song"       # search
+ymc playlist <playlist-id>        # play a playlist
+ymc suggestions                   # get suggestions for current track
+ymc pause / resume / skip / back  # playback control
 ```
 
-### Immersive Mode (Windows)
+### Launch Options
 
-Launch a fullscreen visual player with real playback, queue controls, and audio visualization. Requires `mpv` and `yt-dlp` (same as normal playback).
+| Flag | Short | Description |
+|---|---|---|
+| `--theme` | `-t` | `dark`, `light`, `midnight`, `matrix` |
+| `--volume` | `-v` | Initial volume 0–100 |
+| `--shuffle` | `-s` | Enable shuffle on startup |
+| `--repeat` | `-r` | `off`, `all`, `one` |
+| `--headless` | | Run without TUI |
+| `--win32` | | Immersive fullscreen (Windows only) |
+| `--help` | `-h` | Show help |
 
 ```bash
-# Standard immersive mode
-youtube-music-cli --win32
-
-# Search and play immediately
-youtube-music-cli --win32 --search "artist song"
-
-# With disco mode enabled
-DISCO_MODE=true youtube-music-cli --win32
-
-# Standalone Windows binary (Bun compile)
-bun run build:win32
-dist/ymc-win32.exe
+ymc --theme=matrix --volume=80
+ymc search "lofi beats" --headless
+ymc play dQw4w9WgXcQ --shuffle
 ```
 
-**Hotkeys in Immersive Mode:**
-
-| Key        | Action                                       |
-| ---------- | -------------------------------------------- |
-| `/` or `S` | Open search overlay                          |
-| `Tab`      | Cycle search type (query view)               |
-| `Ctrl+A`   | Edit artist filter                           |
-| `Ctrl+L`   | Edit album filter                            |
-| `=` / `+`  | Volume up (+5%, player view)                 |
-| `-`        | Volume down (-5%, player view)               |
-| `+`        | Increase search result limit (query view)    |
-| `-`        | Decrease search result limit (query view)    |
-| `Shift+D`  | Download selected search result              |
-| `Space`    | Play / Pause                                 |
-| `F`        | Toggle favorite (current track or search)    |
-| `L`        | Library menu (playlists, favorites)          |
-| `P`        | Open saved playlist picker                   |
-| `E`        | Play all favorites                           |
-| `Shift+S`  | Toggle shuffle                               |
-| `R`        | Cycle repeat (off → all → one)               |
-| `,`        | Open settings overlay (Ctrl+, on WT also)    |
-| `M`        | Create mix from search result (results view) |
-| `D`        | Toggle disco mode                            |
-| `↑` / `↓`  | Navigate lists (overlays)                    |
-| `←` / `→`  | Previous / Next track                        |
-| `Enter`    | Select / play (overlays)                     |
-| `Esc`      | Back / close overlay                         |
-| `Q`        | Quit immersive mode                          |
-| `Ctrl+C`   | Force quit                                   |
-
-The footer shows shuffle/repeat/disco status on one line and prioritized shortcuts on the next. Random favorite is available from the library menu (`L`). Right-click the system tray icon for **Settings** or **Exit** (uses `assets/icon.ico`).
-
-Global media keys (Alt+Media keys) also work when the terminal is unfocused on Windows with Bun runtime.
-
-**Troubleshooting immersive playback**
-
-- **Track info shows but time does not move / no audio:** Press `Space` to resume. Immersive auto-starts the last session; if mpv was paused externally (screen share, focus loss), the UI now syncs to `PAUSED` — press `Space` again.
-- **Screen sharing (Discord, Teams, OBS):** Remote viewers often do not hear your PC audio unless you enable “share computer sound” / system audio capture. That is a Windows capture limitation, not the player routing audio only to you.
-- **Requires Bun for Win32 native features:** Global hotkeys and native console title use `@bun-win32/*` via Bun. Run with `bun run dev:win32` or the compiled `ymc-win32.exe` binary.
-
-### Shell completions
-
-Generate shell completion helpers through the lightweight `ymc` alias that ships with the CLI. Run `ymc completions <bash|zsh|powershell|fish>` to print the completion script for your shell, then source it or persist it in your profile:
+### Shell Completions
 
 ```bash
-# Bash
-source <(ymc completions bash)
-ymc completions bash >> ~/.bash_completion
-
-# Zsh
-source <(ymc completions zsh)
-
-# PowerShell
-ymc completions powershell | Out-File -Encoding utf8 $PROFILE
-Invoke-Expression (ymc completions powershell)
-
-# Fish
-ymc completions fish > ~/.config/fish/completions/ymc.fish
+source <(ymc completions bash)                               # Bash
+source <(ymc completions zsh)                                # Zsh
+ymc completions fish > ~/.config/fish/completions/ymc.fish   # Fish
+ymc completions powershell | Out-File -Encoding utf8 $PROFILE # PowerShell
 ```
 
-If you installed the CLI globally with an alias or script name, make sure `ymc` points at the same binary before generating completions so that the script matches your install path.
+---
 
-### Options
-
-| Flag         | Short | Description                                  |
-| ------------ | ----- | -------------------------------------------- |
-| `--theme`    | `-t`  | Theme: `dark`, `light`, `midnight`, `matrix` |
-| `--volume`   | `-v`  | Initial volume (0-100)                       |
-| `--shuffle`  | `-s`  | Enable shuffle mode                          |
-| `--repeat`   | `-r`  | Repeat mode: `off`, `all`, `one`             |
-| `--headless` |       | Run without TUI                              |
-| `--win32`    |       | Immersive fullscreen mode (Windows only)     |
-| `--help`     | `-h`  | Show help                                    |
-
-### Examples
-
-```bash
-# Launch with matrix theme at 80% volume
-youtube-music-cli --theme=matrix --volume=80
-
-# Search and play in headless mode
-youtube-music-cli search "lofi beats" --headless
-
-# Play with shuffle enabled
-youtube-music-cli play dQw4w9WgXcQ --shuffle
-```
-
-## Keyboard Shortcuts
+## ⌨️ Keyboard Shortcuts
 
 ### Global
 
-| Key       | Action          |
-| --------- | --------------- |
-| `?`       | Show help       |
-| `/`       | Search          |
-| `p`       | Plugins manager |
-| `Shift+F` | Favorites view  |
-| `g`       | Suggestions     |
-| `,`       | Settings        |
-| `Esc`     | Go back         |
-| `q`       | Quit            |
+| Key | Action |
+|---|---|
+| `?` | Show help |
+| `/` | Search |
+| `p` | Plugin manager |
+| `Shift+F` | Favorites view |
+| `g` | Suggestions / Radio |
+| `,` | Settings |
+| `q` | Quit |
 
 ### Playback
 
-| Key       | Action            |
-| --------- | ----------------- |
-| `Space`   | Play / Pause      |
-| `n` / `→` | Next track        |
-| `b` / `←` | Previous track    |
-| `Shift+→` | Seek forward 10s  |
+| Key | Action |
+|---|---|
+| `Space` | Play / Pause |
+| `n` / `→` | Next track |
+| `b` / `←` | Previous track |
+| `Shift+→` | Seek forward 10s |
 | `Shift+←` | Seek backward 10s |
-| `=`       | Volume up         |
-| `-`       | Volume down       |
-| `f`       | Toggle favorite   |
-| `s`       | Toggle shuffle    |
-| `r`       | Cycle repeat mode |
+| `=` / `-` | Volume up / down |
+| `f` | Toggle favorite |
+| `s` | Toggle shuffle |
+| `r` | Cycle repeat mode |
+| `Shift+O` | Toggle Offline Mode |
+| `Shift+D` | Download selected track / playlist |
 
 ### Navigation
 
-| Key       | Action    |
-| --------- | --------- |
-| `↑` / `k` | Move up   |
+| Key | Action |
+|---|---|
+| `↑` / `k` | Move up |
 | `↓` / `j` | Move down |
-| `Enter`   | Select    |
-| `Esc`     | Back      |
+| `Enter` | Select |
+| `Esc` | Back |
 
-### Downloads
+---
 
-| Key       | Action                                                  |
-| --------- | ------------------------------------------------------- |
-| `Shift+D` | Download selected song/artist/playlist or playlist view |
+## ⚙️ Configuration
 
-## Plugins
-
-Extend youtube-music-cli with plugins!
-
-### Managing Plugins
-
-**TUI Mode:** Press `p` to open the plugins manager.
-
-**CLI Mode:**
-
-```bash
-# List installed plugins
-youtube-music-cli plugins list
-
-# Install from default repository
-youtube-music-cli plugins install adblock
-
-# Install from GitHub URL
-youtube-music-cli plugins install https://github.com/user/my-plugin
-
-# Enable/disable
-youtube-music-cli plugins enable my-plugin
-youtube-music-cli plugins disable my-plugin
-
-# Update
-youtube-music-cli plugins update my-plugin
-
-# Remove
-youtube-music-cli plugins remove my-plugin
-```
-
-### Available Plugins
-
-| Plugin          | Description                             |
-| --------------- | --------------------------------------- |
-| `adblock`       | Block ads and sponsored content         |
-| `lyrics`        | Display synchronized lyrics             |
-| `scrobbler`     | Scrobble to Last.fm                     |
-| `discord-rpc`   | Discord Rich Presence integration       |
-| `notifications` | Desktop notifications for track changes |
-
-### Developing Plugins
-
-See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md) and [Plugin API Reference](docs/PLUGIN_API.md).
-
-```bash
-# Start from a template
-cp -r templates/plugin-basic my-plugin
-cd my-plugin
-
-# Edit plugin.json and index.ts
-# Install for testing
-youtube-music-cli plugins install /path/to/my-plugin
-```
-
-## Configuration
-
-Config is stored in `~/.youtube-music-cli/config.json`:
+Config is stored at `~/.youtube-music-cli/config.json` (created automatically on first run).
 
 ```json
 {
-	"theme": "dark",
-	"volume": 70,
-	"shuffle": false,
-	"repeat": "off",
-	"streamQuality": "high",
-	"downloadsEnabled": false,
-	"downloadDirectory": "D:/Music/youtube-music-cli",
-	"downloadFormat": "mp3"
+  "theme": "dark",
+  "volume": 70,
+  "shuffle": false,
+  "repeat": "off",
+  "streamQuality": "high",
+  "downloadsEnabled": false,
+  "downloadDirectory": "~/Music/youtube-music-cli",
+  "downloadFormat": "mp3",
+  "offlineMode": false,
+  "offlineAutoCache": false,
+  "maxCacheSizeMB": 500
 }
 ```
 
 ### Stream Quality
 
-| Quality  | Description             |
-| -------- | ----------------------- |
-| `low`    | 64kbps - Save bandwidth |
-| `medium` | 128kbps - Balanced      |
-| `high`   | 256kbps+ - Best quality |
+| Value | Bitrate | Best for |
+|---|---|---|
+| `low` | ~64 kbps | Slow connections |
+| `medium` | ~128 kbps | Balanced |
+| `high` | 256 kbps+ | Best quality |
 
-### Download Settings
+### Offline Mode
 
-- Enable/disable downloads in **Settings** (`,`).
-- Set your download directory in **Settings → Download Folder**.
-- Choose format in **Settings → Download Format** (`mp3` or `m4a`).
-- Downloads are saved as:
-  - `<downloadDirectory>/<artist>/<album>/<title>.mp3` (or `.m4a`)
-- MP3/M4A files are tagged with metadata (`title`, `artist`, `album`) and include cover art when available.
+| Option | Default | Description |
+|---|---|---|
+| `offlineMode` | `false` | Force offline — only play cached tracks |
+| `offlineAutoCache` | `false` | Auto-cache tracks as you play them |
+| `maxCacheSizeMB` | `500` | Max cache size in MB (LRU eviction) |
 
-## Troubleshooting
+Cache lives in `<downloadDirectory>/cache/`. Press `Shift+O` to toggle at runtime.
 
-### mpv not found
+> [!NOTE]
+> `offlineAutoCache` is **disabled by default** — saving audio locally is the most legally sensitive feature. Enable only for personal use with an active subscription. See [DISCLAIMER.md](DISCLAIMER.md).
 
-Ensure mpv is installed and in your PATH:
+---
 
-```bash
-mpv --version
-```
+## 🔌 Plugins
 
-On startup, the CLI now checks for `mpv` and `yt-dlp`. In interactive terminals it can prompt to run an install command automatically (with explicit confirmation first).
+### Managing Plugins
 
-### No audio
-
-1. Check volume isn't muted (`=` to increase)
-2. Verify yt-dlp is working: `yt-dlp --version`
-3. Try a different track
-
-### TUI rendering issues
-
-If rendering looks wrong, try resizing your terminal window or restarting the app.
-
-### Plugin not loading
-
-1. Check `plugin.json` syntax is valid
-2. Verify the plugin is enabled: `youtube-music-cli plugins list`
-3. Check logs for errors
-
-## Contributing
-
-Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Make your changes
-4. Run tests: `bun run test`
-5. Commit: `git commit -m 'feat: add my feature'`
-6. Push: `git push origin feature/my-feature`
-7. Open a Pull Request
-
-### Development
+Press `p` in the TUI, or use the CLI:
 
 ```bash
-# Install dependencies
-bun install
-
-# Run in development mode
-bun run dev
-
-# Build
-bun run build
-
-# Lint and format
-bun run lint:fix
-bun run format
-
-# Type check
-bun run typecheck
+ymc plugins list
+ymc plugins install adblock
+ymc plugins install https://github.com/user/my-plugin
+ymc plugins enable my-plugin
+ymc plugins disable my-plugin
+ymc plugins update my-plugin
+ymc plugins remove my-plugin
 ```
 
-## Tech Stack
+### Built-in Plugins
 
-- **Runtime:** Node.js 18+ / [Bun](https://bun.sh/)
-- **UI Framework:** [Ink](https://github.com/vadimdemedes/ink) (React for CLI)
-- **Language:** TypeScript
-- **Audio:** mpv + yt-dlp
-- **API:** YouTube Music Innertube API
+| Plugin | Description |
+|---|---|
+| `adblock` | Block ads and sponsored content |
+| `lyrics` | Display synchronized lyrics |
+| `scrobbler` | Scrobble plays to Last.fm |
+| `discord-rpc` | Discord Rich Presence integration |
+| `notifications` | Desktop notifications on track change |
 
-## License
+### Developing a Plugin
 
-MIT © [Involvex](https://github.com/involvex)
+```bash
+cp -r templates/plugin-basic my-plugin
+cd my-plugin
+# Edit plugin.json and index.ts, then:
+ymc plugins install /path/to/my-plugin
+```
+
+See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md) and [Plugin API Reference](docs/PLUGIN_API.md).
+
+---
+
+## 🖥️ Immersive Mode (Windows)
+
+A fullscreen visual player with real-time audio visualization and disco effects.
+
+```bash
+ymc --win32                         # standard
+ymc --win32 --search "artist song"  # search and play immediately
+DISCO_MODE=true ymc --win32         # with disco mode
+bun run build:win32 && dist/ymc-win32.exe  # compiled binary
+```
+
+---
+
+## 🔧 Troubleshooting
+
+**`mpv` not found** — ensure `mpv` is installed and on your PATH: `mpv --version`
+
+**No audio** — check volume (`=` to increase), verify `yt-dlp --version`, try another track.
+
+**TUI rendering issues** — resize your terminal or restart the app.
+
+**Offline Mode shows "No cached tracks"** — tracks cache only when `offlineAutoCache: true` and you played them while online.
+
+---
+
+## 🏗️ Development
+
+```bash
+git clone https://github.com/netflyapp/youtube-music-cli.git
+cd youtube-music-cli
+bun install        # install dependencies
+bun run dev        # run in dev mode (hot reload)
+bun run build      # production build
+bun run lint:fix   # lint
+bun run typecheck  # type check
+bun run test       # run tests
+```
+
+### Project Structure
+
+```
+youtube-music-cli/
+├── source/
+│   ├── cli.tsx                  # CLI entry point
+│   ├── app.tsx                  # React app root
+│   ├── components/              # Ink/React UI components
+│   ├── services/
+│   │   ├── player/              # mpv subprocess management
+│   │   ├── offline/             # Offline cache & LRU eviction  ← NEW
+│   │   ├── youtube-music/       # Innertube API wrapper
+│   │   ├── download/            # yt-dlp orchestration
+│   │   └── ...
+│   ├── stores/                  # Global state (Context + useReducer)
+│   ├── hooks/                   # Custom React hooks
+│   └── types/                   # TypeScript interfaces
+├── plugins/                     # Built-in plugins
+├── tests/                       # AVA test suite
+└── docs/                        # Extended documentation
+```
+
+### Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js 18+ / [Bun](https://bun.sh/) |
+| UI | [Ink](https://github.com/vadimdemedes/ink) (React for CLI) |
+| Language | TypeScript 5 |
+| Audio | mpv + yt-dlp |
+| API | YouTube Music Innertube (youtubei.js) |
+| Testing | AVA |
+
+---
+
+## 🗺️ Roadmap
+
+See [`TASK.md`](TASK.md) for the full backlog. Next up:
+
+- 🤖 **Smart Recommendations** — AI-powered suggestions based on listening history
+- 📻 **Playlist Radio Mode** — endless radio from any playlist
+- 📦 **Batch Downloads** — download entire playlists with progress tracking
+- 🌊 **ASCII Visualizer** — real-time audio visualization in the terminal
+- 🖼️ **Album Art** — display cover art via sixel / kitty protocol
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+```bash
+git checkout -b feature/my-feature
+# make changes
+bun run lint:fix && bun run typecheck && bun run test
+git commit -m 'feat: add my feature'   # Conventional Commits
+git push && open a PR
+```
+
+---
+
+## ⚖️ Legal Notice
+
+This project violates [YouTube's Terms of Service](https://www.youtube.com/t/terms) and is intended for **personal, hobby use only**. It is not affiliated with Google or YouTube. You must have an active YouTube Music subscription to use it ethically. The author assumes no responsibility for account bans, legal claims, or any other consequences.
+
+→ Read the full [DISCLAIMER.md](DISCLAIMER.md) before using or distributing this software.
+
+---
+
+## 📜 Credits & Attribution
+
+This project is a fork of [youtube-music-cli](https://github.com/involvex/youtube-music-cli) originally created by **involvex** and released under the MIT License. All original functionality is built on their work. New features are maintained by [Miłosz Zając](https://github.com/netflyapp).
+
+---
+
+## 📄 License
+
+MIT © [Miłosz Zając](https://github.com/netflyapp)
+
+Original work MIT © [involvex](https://github.com/involvex)
 
 ---
 
 <div align="center">
 
-**[Documentation](https://involvex.github.io/youtube-music-cli)** • **[Report Bug](https://github.com/involvex/youtube-music-cli/issues)** • **[Request Feature](https://github.com/involvex/youtube-music-cli/issues)**
+**[Report a Bug](https://github.com/netflyapp/youtube-music-cli/issues/new?template=bug_report.md)** • **[Request a Feature](https://github.com/netflyapp/youtube-music-cli/issues/new?template=feature_request.md)** • **[Discussions](https://github.com/netflyapp/youtube-music-cli/discussions)**
 
-Made with ❤️ for music lovers
+Made with ❤️ for music lovers who live in the terminal
+
+⚠️ [Legal Disclaimer](DISCLAIMER.md) — Personal use only • Not affiliated with Google or YouTube
 
 </div>

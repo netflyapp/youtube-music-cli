@@ -1,43 +1,47 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: 🐛 Bug Report
+about: Report a bug to help us improve youtube-music-cli
 title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
-## Describe the bug
+## 🐛 Describe the Bug
 
 A clear and concise description of what the bug is.
 
-## To Reproduce
+## 📋 Steps to Reproduce
 
-Steps to reproduce the behavior:
+1. Run `ymc ...`
+2. Press `...`
+3. See error
 
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '....'
-4. See error
+## ✅ Expected Behavior
 
-## Expected behavior
+What you expected to happen.
 
-A clear and concise description of what you expected to happen.
+## ❌ Actual Behavior
 
-## Screenshots
+What actually happened.
 
-If applicable, add screenshots to help explain your problem.
+## 🖥️ Environment
 
-## Environment
+| Field | Value |
+|---|---|
+| OS | e.g. macOS 14.5 / Ubuntu 22.04 / Windows 11 |
+| Node.js version | `node --version` |
+| Bun version (if used) | `bun --version` |
+| CLI version | `ymc --version` |
+| mpv version | `mpv --version` |
+| yt-dlp version | `yt-dlp --version` |
+| Terminal emulator | e.g. iTerm2, Windows Terminal, Alacritty |
 
-- OS: [e.g. Windows 11, macOS 14, Ubuntu 22.04]
-- Node version: [e.g. 18.17.0 - run `node --version`]
-- CLI version: [e.g. 0.0.20 - run `youtube-music-cli --version`]
-- mpv version: [e.g. 0.36.0 - run `mpv --version`]
+## 📸 Screenshots / Logs
 
-## Additional context
+```
+paste logs here
+```
 
-Add any other context about the problem here.
+## 🔍 Additional Context
 
-## Logs
-
-If applicable, paste relevant log output here.
+Any other context that might help diagnose the issue.

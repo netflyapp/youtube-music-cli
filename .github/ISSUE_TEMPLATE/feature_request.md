@@ -1,23 +1,33 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: 💡 Feature Request
+about: Suggest a new feature or improvement for youtube-music-cli
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 ---
 
-## Is your feature request related to a problem? Please describe.
+## 💡 Feature Description
 
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+A clear and concise description of the feature you'd like to see.
 
-## Describe the solution you'd like
+## 🤔 Problem / Motivation
 
-A clear and concise description of what you want to happen.
+What problem does this solve? Why is this feature needed?
+e.g. *I often want to do X but there's no way to do it currently.*
 
-## Describe alternatives you've considered
+## 🎯 Proposed Solution
 
-A clear and concise description of any alternative solutions or features you've considered.
+Describe the solution you'd like, including UX details (keyboard shortcut, menu item, config option, etc.).
 
-## Additional context
+## 🔄 Alternatives Considered
 
-Add any other context or screenshots about the feature request here.
+Any alternative solutions or workarounds you've considered.
+
+## 📋 Acceptance Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## 📎 Additional Context
+
+Screenshots, mockups, links to similar features in other tools, or any other relevant context.

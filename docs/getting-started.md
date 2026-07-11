@@ -77,19 +77,19 @@ sudo apt install yt-dlp
 Requires [Node.js](https://nodejs.org) 18+ installed.
 
 ```bash
-npm install -g @involvex/youtube-music-cli
+npm install -g @netflyapp/youtube-music-cli
 ```
 
 ### Bun
 
 ```bash
-bun install -g @involvex/youtube-music-cli
+bun install -g @netflyapp/youtube-music-cli
 ```
 
 ### Homebrew
 
 ```bash
-brew tap involvex/youtube-music-cli https://github.com/involvex/youtube-music-cli.git
+brew tap netflyapp/youtube-music-cli https://github.com/involvex/youtube-music-cli.git
 brew install youtube-music-cli
 ```
 

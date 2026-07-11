@@ -30,7 +30,7 @@ const rootDir = process.cwd();
 const isWindows = process.platform === 'win32';
 const outputName = isWindows ? 'youtube-music-cli.exe' : 'youtube-music-cli';
 const outfile = path.join(rootDir, 'dist', outputName);
-const banner = '//Copyright (c) 2026 involvex';
+const banner = '//Copyright (c) 2026 Miłosz Zając (netflyapp)';
 const iconPath = path.join(rootDir, 'assets', 'icon.ico');
 
 const platformTarget = isWindows
@@ -45,10 +45,10 @@ const compileOptions = isWindows
 			outfile,
 			footer: banner,
 			windowsTitle: 'YouTube Music CLI',
-			windowsPublisher: 'involvex',
+			windowsPublisher: 'netflyapp',
 			windowsIcon: iconPath,
-			windowsCopyright: 'Copyright (c) 2026 involvex',
-			windowsDescription: 'A Commandline music player for youtube-music',
+			windowsCopyright: 'Copyright (c) 2026 Miłosz Zając (netflyapp)',
+			windowsDescription: 'A blazing-fast TUI music player for YouTube Music',
 		}
 	: {
 			target: platformTarget,

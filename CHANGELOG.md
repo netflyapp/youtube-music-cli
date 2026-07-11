@@ -1,3 +1,20 @@
+## [1.0.0](https://github.com/netflyapp/youtube-music-cli/compare/v0.0.94...v1.0.0) (2026-07-12)
+
+> **Fork release** by [Miłosz Zając](https://github.com/netflyapp) — based on [involvex/youtube-music-cli](https://github.com/involvex/youtube-music-cli) v0.0.94.
+> ⚠️ Personal use only — see [DISCLAIMER.md](DISCLAIMER.md).
+
+### Features
+
+- **offline:** Offline Mode with LRU cache eviction — cache tracks locally and listen without internet (`Shift+O` to toggle)
+- **offline:** Auto-cache tracks as you play (`offlineAutoCache` config, disabled by default)
+- **offline:** Connectivity monitoring — automatic detection of online/offline state with 30s polling
+
+### Bug Fixes
+
+- **cli:** Replace `console.log` with `console.error` in `cli.tsx` to prevent stdout corruption in TUI rendering
+
+---
+
 ## [0.0.94](https://github.com/involvex/youtube-music-cli/compare/v0.0.93...v0.0.94) (2026-07-02)
 
 ### Features

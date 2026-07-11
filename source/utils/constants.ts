@@ -32,7 +32,7 @@ function loadAppVersion(): string {
 }
 
 // Application constants
-export const APP_NAME = '@involvex/youtube-music-cli';
+export const APP_NAME = '@netflyapp/youtube-music-cli';
 export const APP_VERSION = loadAppVersion();
 
 // Config directory

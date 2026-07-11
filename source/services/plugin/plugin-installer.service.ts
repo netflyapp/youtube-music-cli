@@ -9,7 +9,7 @@ import {execSync} from 'node:child_process';
 
 const PLUGINS_DIR = join(CONFIG_DIR, 'plugins');
 const DEFAULT_PLUGIN_REPO =
-	'https://github.com/involvex/youtube-music-cli-plugins';
+	'https://github.com/netflyapp/youtube-music-cli-plugins'
 
 /**
  * Detect available package manager (bun preferred, npm fallback)

@@ -19,7 +19,7 @@ updates:
       - 'dependencies'
       - 'automated'
     reviewers:
-      - 'involvex'
+      - 'netflyapp'
     groups:
       # Group production dependencies
       production-deps:

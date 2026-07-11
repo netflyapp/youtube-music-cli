@@ -37,6 +37,7 @@
 | User Interface             | Listening Stats Dashboard         | Implemented |
 | **Technical Improvements** | Multiple Audio Backends           | Planned     |
 | Technical Improvements     | Shell Completions                 | Implemented |
+| Technical Improvements     | Offline Mode (LRU cache)          | Implemented |
 | Technical Improvements     | Custom mpv Config Passthrough     | Planned     |
 | Technical Improvements     | Configurable Audio Output Device  | Planned     |
 | Technical Improvements     | Auto-Update Mechanism             | Planned     |

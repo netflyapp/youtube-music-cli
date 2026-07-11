@@ -1,9 +1,9 @@
 {
 	"appName": "youtube-music-cli",
 	"displayName": "YouTube Music CLI",
-	"publisher": "CN=involvex",
-	"version": "0.0.94.0",
-	"description": "A command-line music player for YouTube Music",
+	"publisher": "CN=netflyapp",
+	"version": "1.0.0.0",
+	"description": "A blazing-fast TUI music player for YouTube Music — offline-ready, keyboard-driven",
 	"executable": "youtube-music-cli.exe",
 	"prebuiltExecutablePath": "./dist/youtube-music-cli.exe",
 	"alias": "ymc.exe",

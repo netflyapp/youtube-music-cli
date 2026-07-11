@@ -432,7 +432,15 @@ class PlayerService {
 		}
 
 		const message = JSON.stringify({command}) + '\n';
-		this.ipcSocket.write(message);
+		try {
+			this.ipcSocket.write(message);
+		} catch (error) {
+			logger.error('PlayerService', 'IPC write failed', {
+				command: command[0],
+				error: error instanceof Error ? error.message : String(error),
+			});
+			return;
+		}
 
 		logger.debug('PlayerService', 'Sent IPC command', {
 			command: command[0],

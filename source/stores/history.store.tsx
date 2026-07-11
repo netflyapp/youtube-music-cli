@@ -81,7 +81,12 @@ export function HistoryProvider({children}: {children: ReactNode}) {
 	}, [playerState.currentTrack, playerState.isPlaying]);
 
 	useEffect(() => {
-		void saveHistory(state);
+		const handle = setTimeout(() => {
+			void saveHistory(state);
+		}, 500);
+		return () => {
+			clearTimeout(handle);
+		};
 	}, [state]);
 
 	const value = useMemo(() => ({history: state}), [state]);

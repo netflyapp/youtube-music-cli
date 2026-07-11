@@ -1,7 +1,7 @@
 // Static file serving service for web UI
 import {readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
-import {extname, join, dirname, normalize, resolve, sep} from 'node:path';
+import {extname, join, dirname, normalize, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {logger} from '../logger/logger.service.ts';
 
@@ -76,14 +76,7 @@ class StaticFileService {
 		const rootPath = resolve(this.webDistDir);
 		const resolvedPath = resolve(rootPath, relativePath);
 
-		// Normalize path separators for cross-platform comparison
-		const normalizedRoot = rootPath.replace(/[\\/]+/g, sep);
-		const normalizedResolved = resolvedPath.replace(/[\\/]+/g, sep);
-
-		if (
-			resolvedPath !== rootPath &&
-			!normalizedResolved.startsWith(normalizedRoot)
-		) {
+		if (!resolvedPath.startsWith(rootPath)) {
 			return null;
 		}
 

@@ -33,7 +33,7 @@ import GenresLayout from './GenresLayout.tsx';
 import AIChatView from '../ai/AIChatView.tsx';
 import StatsDashboard from '../stats/StatsDashboard.tsx';
 import {KEYBINDINGS, VIEW} from '../../utils/constants.ts';
-import {Box} from 'ink';
+import {Box, useApp} from 'ink';
 import {useTerminalSize} from '../../hooks/useTerminalSize.ts';
 import {getPlayerService} from '../../services/player/player.service.ts';
 import {getConfigService} from '../../services/config/config.service.ts';
@@ -44,6 +44,7 @@ function MainLayout() {
 	const {state: navState, dispatch} = useNavigation();
 	const {resume} = usePlayer();
 	const {columns} = useTerminalSize();
+	const {exit} = useApp();
 
 	// Responsive padding based on terminal size
 	const getPadding = () => (columns < 100 ? 0 : 1);
@@ -89,11 +90,12 @@ function MainLayout() {
 	const handleQuit = useCallback(() => {
 		// From player view, quit the app
 		if (navState.currentView === VIEW.PLAYER) {
-			process.exit(0);
+			exit();
+			return;
 		}
 		// From other views, go back
 		dispatch({category: 'GO_BACK'});
-	}, [navState.currentView, dispatch]);
+	}, [navState.currentView, dispatch, exit]);
 
 	const goToLyrics = useCallback(() => {
 		dispatch({category: 'NAVIGATE', view: VIEW.LYRICS});
@@ -147,8 +149,8 @@ function MainLayout() {
 		}
 
 		// Exit the app
-		process.exit(0);
-	}, []);
+		exit();
+	}, [exit]);
 
 	const handleResumeBackground = useCallback(() => {
 		const player = getPlayerService();

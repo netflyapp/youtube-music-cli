@@ -109,6 +109,90 @@ async function listenbrainzScrobble(
 	});
 }
 
+// ---------- Now Playing ----------
+
+async function lastfmNowPlaying(
+	title: string,
+	artist: string,
+	apiKey: string,
+	sessionKey: string,
+): Promise<void> {
+	const params: Record<string, string> = {
+		method: 'track.updateNowPlaying',
+		artist,
+		track: title,
+		api_key: apiKey,
+		sk: sessionKey,
+	};
+
+	const secret = '';
+	const sig = buildLastfmSignature(params, secret);
+	params['api_sig'] = sig;
+	params['format'] = 'json';
+
+	const body = new URLSearchParams(params);
+	const response = await fetch('https://ws.audioscrobbler.com/2.0/', {
+		method: 'POST',
+		body,
+	});
+
+	if (!response.ok) {
+		throw new Error(`Last.fm now-playing failed: HTTP ${response.status}`);
+	}
+
+	const data = (await response.json()) as {error?: number; message?: string};
+	if (data.error) {
+		throw new Error(`Last.fm now-playing error ${data.error}: ${data.message}`);
+	}
+
+	logger.info('ScrobblingService', 'Last.fm now-playing update sent', {
+		title,
+		artist,
+	});
+}
+
+async function listenbrainzNowPlaying(
+	title: string,
+	artist: string,
+	token: string,
+): Promise<void> {
+	const payload = {
+		listen_type: 'playing_now',
+		payload: [
+			{
+				track_metadata: {
+					artist_name: artist,
+					track_name: title,
+				},
+			},
+		],
+	};
+
+	const response = await fetch(
+		'https://api.listenbrainz.org/1/submit-listens',
+		{
+			method: 'POST',
+			headers: {
+				Authorization: `Token ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(payload),
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(
+			`ListenBrainz now-playing failed: HTTP ${response.status}`,
+		);
+	}
+
+	logger.info(
+		'ScrobblingService',
+		'ListenBrainz now-playing update sent',
+		{title, artist},
+	);
+}
+
 // ---------- Main service ----------
 
 export class ScrobblingService {
@@ -129,6 +213,53 @@ export class ScrobblingService {
 		return Boolean(
 			(this.lastfmApiKey && this.lastfmSessionKey) || this.listenbrainzToken,
 		);
+	}
+
+	async nowPlaying(track: TrackInfo): Promise<void> {
+		if (!this.isEnabled) return;
+
+		const tasks: Array<Promise<void>> = [];
+
+		if (this.lastfmApiKey && this.lastfmSessionKey) {
+			tasks.push(
+				lastfmNowPlaying(
+					track.title,
+					track.artist,
+					this.lastfmApiKey,
+					this.lastfmSessionKey,
+				).catch(error => {
+					logger.error(
+						'ScrobblingService',
+						'Last.fm now-playing failed',
+						{
+							error:
+								error instanceof Error ? error.message : String(error),
+						},
+					);
+				}),
+			);
+		}
+
+		if (this.listenbrainzToken) {
+			tasks.push(
+				listenbrainzNowPlaying(
+					track.title,
+					track.artist,
+					this.listenbrainzToken,
+				).catch(error => {
+					logger.error(
+						'ScrobblingService',
+						'ListenBrainz now-playing failed',
+						{
+							error:
+								error instanceof Error ? error.message : String(error),
+						},
+					);
+				}),
+			);
+		}
+
+		await Promise.all(tasks);
 	}
 
 	async scrobble(track: TrackInfo): Promise<void> {

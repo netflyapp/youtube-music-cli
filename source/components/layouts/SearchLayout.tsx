@@ -320,7 +320,13 @@ function SearchLayout() {
 			{!isLoading &&
 				navState.hasSearched &&
 				filteredResults.length === 0 &&
-				!error && <Text color={theme.colors.dim}>No results found</Text>}
+				!error && (
+					<Text color={theme.colors.dim}>
+						{rawResults.length > 0 && filteredResults.length === 0
+							? 'No results match the active filters (try Ctrl+A/Ctrl+L to clear them)'
+							: 'No results found'}
+					</Text>
+				)}
 
 			{/* Instructions */}
 			{actionMessage && (

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Architecture | youtube-music-cli</title>
+<meta name="description" content="A powerful Terminal User Interface (TUI) music player for YouTube Music — keyboard-driven, themeable, plugin-extensible." />
+<link rel="icon" type="image/png" href="../assets/icon2.PNG" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg-2:#0f0f17;
+  --surface:rgba(255,255,255,0.04);--surface-2:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.08);--border-2:rgba(255,255,255,0.12);
+  --text:#fff;--text-muted:#a1a1aa;--text-dim:#71717a;
+  --accent:#ff0033;--accent-2:#ff4d6d;--accent-3:#ff8095;
+  --green:#4ade80;--cyan:#22d3ee;
+}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(255,0,51,0.18),transparent),radial-gradient(ellipse 60% 40% at 80% 0%,rgba(255,77,109,0.10),transparent);pointer-events:none;z-index:-1}
+a{color:inherit;text-decoration:none}
+code,pre,.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(10,10,15,0.6);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-0.01em}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;font-size:16px}
+.nav-links{display:flex;gap:28px;font-size:14px;color:var(--text-muted)}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;gap:12px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:all 0.2s}
+.btn-ghost{background:var(--surface);border-color:var(--border);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-2);border-color:var(--border-2)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 8px 24px -8px rgba(255,0,51,0.5)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 32px -8px rgba(255,0,51,0.6)}
+@media(max-width:768px){.nav-links{display:none}}
+.hero{padding:80px 0 60px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:13px;color:var(--text-muted);margin-bottom:28px}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+.hero h1{font-size:clamp(40px,6.5vw,76px);font-weight:800;letter-spacing:-0.03em;line-height:1.05;margin-bottom:24px;background:linear-gradient(180deg,#fff 0%,#a1a1aa 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero h1 .accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--text-muted);max-width:640px;margin:0 auto 40px}
+.install{display:inline-flex;align-items:center;gap:12px;background:rgba(0,0,0,0.5);border:1px solid var(--border-2);border-radius:12px;padding:14px 20px;font-size:14px;backdrop-filter:blur(10px)}
+.install code{color:var(--text)}
+.install .prompt{color:var(--accent);user-select:none}
+.terminal-wrap{max-width:880px;margin:0 auto;padding:0 24px 40px}
+.terminal{background:#0a0a14;border:1px solid var(--border-2);border-radius:14px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(255,0,51,0.25),0 0 0 1px rgba(255,255,255,0.04) inset;text-align:left}
+.terminal-header{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.dots{display:flex;gap:6px}
+.dots span{width:12px;height:12px;border-radius:50%}
+.dots span:nth-child(1){background:#ff5f57}
+.dots span:nth-child(2){background:#febc2e}
+.dots span:nth-child(3){background:#28c840}
+.terminal-title{font-size:12px;color:var(--text-dim)}
+.terminal-body{padding:22px;font-size:13px;line-height:1.7;color:#d4d4d8;min-height:340px}
+.t-line{display:block;white-space:pre}
+.t-red{color:#ff4d6d}.t-green{color:#4ade80}.t-cyan{color:#22d3ee}.t-yellow{color:#facc15}.t-dim{color:#71717a}.t-bold{font-weight:700}
+.cursor{display:inline-block;width:8px;height:14px;background:#fff;vertical-align:text-bottom;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:40px 0 80px;max-width:880px;margin:0 auto}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat .num{font-size:28px;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(180deg,#fff,#a1a1aa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat .label{font-size:12px;color:var(--text-dim);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.section{padding:100px 0}
+.section-head{text-align:center;margin-bottom:64px}
+.kicker{font-size:13px;color:var(--accent);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px}
+.section h2{font-size:clamp(32px,4.5vw,48px);font-weight:800;letter-spacing:-0.02em;line-height:1.1;margin-bottom:16px}
+.section .sub{font-size:17px;color:var(--text-muted);max-width:580px;margin:0 auto}
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:760px){.features{grid-template-columns:1fr}}
+.feature{position:relative;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border);border-radius:16px;padding:28px;transition:border-color 0.2s,transform 0.2s}
+.feature:hover{border-color:var(--border-2);transform:translateY(-2px)}
+.feature .num{position:absolute;top:24px;right:28px;font-size:12px;color:var(--text-dim);font-family:"SF Mono",monospace;letter-spacing:0.05em}
+.feature .icon{width:44px;height:44px;border-radius:10px;background:rgba(255,0,51,0.12);border:1px solid rgba(255,0,51,0.25);display:grid;place-items:center;font-size:22px;margin-bottom:18px}
+.feature h3{font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:-0.01em}
+.feature p{font-size:14px;color:var(--text-muted);line-height:1.6}
+.try{background:linear-gradient(180deg,var(--bg-2),var(--bg));border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.code-wrap{max-width:760px;margin:0 auto;background:#000;border:1px solid var(--border-2);border-radius:14px;overflow:hidden}
+.code-tabs{display:flex;gap:4px;padding:10px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.tab{padding:6px 12px;font-size:12px;color:var(--text-dim);border-radius:6px;font-family:"SF Mono",monospace;cursor:pointer;border:none;background:transparent}
+.tab.active{background:var(--surface);color:var(--text)}
+.code-panel{display:none;padding:22px;font-size:14px;line-height:1.8;color:#e4e4e7;white-space:pre;overflow-x:auto}
+.code-panel.active{display:block}
+.code-panel .c-green{color:#4ade80}.code-panel .c-dim{color:#71717a}.code-panel .c-cyan{color:#22d3ee}.code-panel .c-red{color:#ff4d6d}
+.docs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:880px){.docs{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.docs{grid-template-columns:1fr}}
+.doc,.doc-card{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all 0.2s}
+.doc:hover,.doc-card:hover{background:var(--surface-2);border-color:var(--border-2);transform:translateY(-1px)}
+.doc .icon{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.04);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.doc .title{font-size:14px;font-weight:600}
+.doc .desc{font-size:12px;color:var(--text-dim)}
+.doc .arrow{margin-left:auto;color:var(--text-dim);font-size:14px}
+.reqs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto}
+@media(max-width:720px){.reqs{grid-template-columns:1fr}}
+.req{padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-align:center}
+.req .emoji{font-size:28px;margin-bottom:12px}
+.req h4{font-size:15px;font-weight:700;margin-bottom:4px}
+.req p{font-size:13px;color:var(--text-dim)}
+.cta{text-align:center;padding:100px 24px}
+.cta h2{font-size:clamp(32px,5vw,56px);font-weight:800;letter-spacing:-0.02em;line-height:1.1;margin-bottom:20px;max-width:760px;margin-left:auto;margin-right:auto}
+.cta p{font-size:17px;color:var(--text-muted);max-width:560px;margin:0 auto 36px}
+.cta-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+footer{border-top:1px solid var(--border);padding:48px 0 32px;color:var(--text-dim);font-size:13px}
+.foot-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-brand p{margin-top:12px;color:var(--text-dim);max-width:280px;font-size:13px}
+.foot-col h5{color:var(--text);font-size:13px;margin-bottom:14px;font-weight:600}
+.foot-col ul{list-style:none}
+.foot-col li{margin-bottom:10px}
+.foot-col a:hover{color:var(--text)}
+.foot-bottom{display:flex;justify-content:space-between;padding-top:24px;border-top:1px solid var(--border);font-size:12px;flex-wrap:wrap;gap:12px}
+
+.doc-page{padding:60px 0 100px;max-width:880px;margin:0 auto}
+.doc-back{font-size:13px;color:var(--text-muted);margin-bottom:24px;display:inline-flex;align-items:center;gap:6px}
+.doc-back:hover{color:var(--text)}
+.doc-page h1{font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-0.02em;line-height:1.1;margin-bottom:16px;background:linear-gradient(180deg,#fff,#a1a1aa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.doc-page .lede{font-size:18px;color:var(--text-muted);margin-bottom:48px;max-width:680px}
+.doc-page h2{font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:48px 0 16px;color:var(--text)}
+.doc-page h3{font-size:19px;font-weight:700;margin:32px 0 10px;color:var(--text)}
+.doc-page p{font-size:16px;color:var(--text-muted);margin-bottom:16px;line-height:1.75}
+.doc-page ul,.doc-page ol{margin:0 0 20px 24px;color:var(--text-muted)}
+.doc-page li{margin-bottom:8px;font-size:15px;line-height:1.7}
+.doc-page code{background:rgba(255,255,255,0.06);border:1px solid var(--border);padding:2px 6px;border-radius:5px;font-size:13px;color:#fff}
+.doc-page pre{background:#000;border:1px solid var(--border-2);border-radius:12px;padding:18px 22px;margin:18px 0;overflow-x:auto;font-size:13px;line-height:1.7}
+.doc-page pre code{background:transparent;border:none;padding:0;color:#e4e4e7;font-size:13px}
+.doc-page table{border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.doc-page th,.doc-page td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.doc-page th{background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:0.05em}
+.doc-page td{color:var(--text-muted)}
+.doc-page tr:last-child td{border-bottom:none}
+.doc-page a{color:var(--accent-2);text-decoration:underline;text-decoration-color:rgba(255,77,109,0.35);text-underline-offset:3px}
+.doc-page a:hover{color:var(--accent);text-decoration-color:var(--accent)}
+.doc-page img{max-width:100%;border-radius:12px;margin:24px 0;border:1px solid var(--border)}
+.doc-page .lede-img{margin:-24px 0 48px;text-align:center}
+.callout{padding:18px 22px;border-radius:12px;background:rgba(255,0,51,0.06);border:1px solid rgba(255,0,51,0.2);margin:24px 0;font-size:14px;color:var(--text-muted)}
+.callout strong{color:var(--text)}
+.kbd{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.08);border:1px solid var(--border-2);font-family:"SF Mono",monospace;font-size:12px;color:#fff;margin:0 2px}
+.lede-img img{display:inline-block}
+</style>
+
+</head>
+<body>
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-mark">🎵</span>
+      <span>youtube-music-cli</span>
+    </a>
+    <div class="nav-links">
+      <a href="../index.html#features">Features</a>
+      <a href="../index.html#install">Install</a>
+      <a href="../index.html#docs">Docs</a>
+      <a href="../docs/keyboard-shortcuts.html">Shortcuts</a>
+      <a href="https://github.com/netflyapp/youtube-music-cli" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="https://github.com/netflyapp/youtube-music-cli" target="_blank" rel="noopener">★ Star</a>
+      <a class="btn btn-primary" href="../index.html#install">Install</a>
+    </div>
+  </div>
+</nav>
+
+<section class="container doc-page">
+  <a class="doc-back" href="../index.html">← Back to home</a>
+  <nav class="docs" style="margin: 32px 0 48px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <a class="doc" href="getting-started.html"><div class="icon">📖</div><div><div class="title">Getting Started</div><div class="desc">Install, first run</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="configuration.html"><div class="icon">⚙️</div><div><div class="title">Configuration</div><div class="desc">Themes, options</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="keyboard-shortcuts.html"><div class="icon">⌨️</div><div><div class="title">Shortcuts</div><div class="desc">Full keymap</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="PLUGIN_API.html"><div class="icon">🔌</div><div><div class="title">Plugin API</div><div class="desc">Reference</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="PLUGIN_DEVELOPMENT.html"><div class="icon">🛠️</div><div><div class="title">Plugin Dev</div><div class="desc">Step-by-step</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="architecture.html"><div class="icon">🏗️</div><div><div class="title">Architecture</div><div class="desc">Technical overview</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="roadmap.html"><div class="icon">🛣️</div><div><div class="title">Roadmap</div><div class="desc">What's next</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="support.html"><div class="icon">💖</div><div><div class="title">Support</div><div class="desc">Sponsor us</div></div><div class="arrow">→</div></a>
+    <a class="doc" href="../index.html"><div class="icon">🏠</div><div><div class="title">Home</div><div class="desc">All sections</div></div><div class="arrow">→</div></a>
+  </nav>
+  <h1>Architecture</h1>
+<p>Technical overview of youtube-music-cli's architecture.</p>
+<h2>Overview</h2>
+<p>youtube-music-cli is built with:</p>
+<ul><li><strong>React + Ink</strong> - Terminal UI framework</li><li><strong>TypeScript</strong> - Type-safe development</li><li><strong>Bun</strong> - Fast JavaScript runtime</li><li><strong>mpv + yt-dlp</strong> - Audio playback</li></ul>
+<h2>Project Structure</h2>
+<pre><code class="lang-">youtube-music-cli/
+├── source/
+│   ├── cli.tsx              # CLI entry point
+│   ├── app.tsx              # App setup
+│   ├── main.tsx             # Root component with providers
+│   │
+├── components/          # UI Components
+│   ├── layouts/         # Main view layouts
+│   ├── player/          # Player components
+│   ├── favorites/       # Favorites view
+│   ├── search/          # Search components
+│   ├── plugins/         # Plugin management UI
+│   │   ├── settings/        # Settings UI
+│   │   └── common/          # Shared components
+│   │
+│   ├── services/            # Business logic
+│   │   ├── player/          # Audio playback
+│   │   ├── youtube-music/   # YouTube Music API
+│   │   ├── plugin/          # Plugin system
+│   │   ├── config/          # Configuration
+│   │   └── logger/          # Logging
+│   │
+│   ├── stores/              # State management
+│   │   ├── player.store.tsx
+│   │   ├── navigation.store.tsx
+│   │   └── plugins.store.tsx
+│   │
+│   ├── hooks/               # Custom React hooks
+│   ├── types/               # TypeScript definitions
+│   ├── contexts/            # React contexts
+│   ├── immersive/           # Immersive Windows TUI
+│   │   ├── renderer/        # Frame buffer, braille canvas, ANSI codes
+│   │   ├── visualizer/      # Audio collector, disco engine
+│   │   ├── effects/         # Particle system, color extractor
+│   │   ├── native/          # Console, tray, notifications, hotkeys
+│   │   └── components/      # Immersive player component
+│   └── utils/               # Utilities
+│
+├── plugins/                 # Plugin submodule
+├── templates/               # Plugin templates
+├── docs/                    # Documentation
+└── dist/                    # Compiled output</code></pre>
+<h2>State Management</h2>
+<p>Uses React Context + useReducer pattern:</p>
+<pre><code class="lang-">                    ┌─────────────────┐
+                    │   Providers     │
+                    │                 │
+                    │ ┌─────────────┐ │
+                    │ │ThemeProvider│ │
+                    │ └─────────────┘ │
+                    │ ┌─────────────┐ │
+                    │ │PlayerProvider│ │
+                    │ └─────────────┘ │
+                    │ ┌─────────────┐ │
+                    │ │FavProvider  │ │
+                    │ └─────────────┘ │
+                    │ ┌─────────────┐ │
+                    │ │NavProvider  │ │
+                    │ └─────────────┘ │
+                    │ ┌─────────────┐ │
+                    │ │PluginsProvider│ │
+                    │ └─────────────┘ │
+                    └─────────────────┘
+                            │
+                            ▼
+                    ┌─────────────────┐
+                    │   MainLayout    │
+                    │   (Router)      │
+                    └─────────────────┘</code></pre>
+<h3>Player Store</h3>
+<p>Manages playback state:</p>
+<ul><li>Current track</li><li>Queue</li><li>Playback status</li><li>Volume, shuffle, repeat</li></ul>
+<h3>Favorites Store</h3>
+<p>Manages favorite tracks:</p>
+<ul><li>Toggle favorite status</li><li>Persistence to <span class="kbd">favorites.json</span></li><li>Optimized list rendering</li></ul>
+<h3>Navigation Store</h3>
+<p>Manages view navigation:</p>
+<ul><li>Current view</li><li>View history</li><li>Navigation actions</li></ul>
+<h3>Plugins Store</h3>
+<p>Manages plugin state:</p>
+<ul><li>Installed plugins</li><li>Plugin status (enabled/disabled)</li><li>Installation operations</li></ul>
+<h2>Service Layer</h2>
+<p>Services encapsulate external dependencies:</p>
+<h3>PlayerService</h3>
+<p>Wraps mpv/yt-dlp for audio playback.</p>
+<pre><code class="lang-typescript">const player = getPlayerService();
+await player.play(track);
+player.pause();
+player.setVolume(80);</code></pre>
+<h3>MusicService</h3>
+<p>Wraps YouTube Music API (Innertube).</p>
+<pre><code class="lang-typescript">const music = getMusicService();
+const results = await music.search('query');
+const suggestions = await music.getSuggestions(videoId);</code></pre>
+<h3>FavoritesService</h3>
+<p>Wraps favorites persistence.</p>
+<pre><code class="lang-typescript">const favs = getFavoritesService();
+await favs.saveFavorites(tracks);
+const data = await favs.loadFavorites();</code></pre>
+<h3>PluginRegistryService</h3>
+<p>Manages plugin lifecycle.</p>
+<pre><code class="lang-typescript">const registry = getPluginRegistryService();
+await registry.loadAllPlugins();
+await registry.enablePlugin('adblock');</code></pre>
+<h2>Plugin System</h2>
+<h3>Plugin Lifecycle</h3>
+<pre><code class="lang-">Install → Load → Init → Enable → (Running) → Disable → Destroy → Uninstall</code></pre>
+<h3>Plugin Context</h3>
+<p>Plugins receive a context object with APIs:</p>
+<pre><code class="lang-typescript">{
+  player,      // Playback control
+  navigation,  // View navigation
+  config,      // Configuration storage
+  logger,      // Logging
+  filesystem,  // File operations
+  audio,       // Audio stream hooks
+  on/off/emit, // Event system
+}</code></pre>
+<h3>Event Flow</h3>
+<pre><code class="lang-">User Action → Store Dispatch → State Update → Plugin Hook → UI Re-render
+                                    │
+                                    ▼
+                            Plugin Event Emitted</code></pre>
+<h2>Immersive Mode (Windows)</h2>
+<p>A fullscreen Windows-only TUI experience wired to the real player stack (<code>PlayerService</code>, YouTube Music API). It renders ANSI graphics directly to the terminal using an alternate screen buffer.</p>
+<h3>Architecture</h3>
+<pre><code class="lang-">┌─────────────────────────────────────┐
+│  cli.tsx --win32 / immersive-entry  │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│       immersive-app.ts (bridge)     │
+│  queue state + mpv IPC + search     │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┬──────────┬──────────┐
+       ▼               ▼          ▼          ▼
+  ┌─────────┐   ┌───────────┐ ┌────────┐ ┌────────┐
+  │Renderer │   │Visualizer │ │Effects │ │ Native │
+  │         │   │           │ │        │ │        │
+  │-FrameBuf│   │-HybridAud │ │-Particle│ │-Tray  │
+  │-Braille │   │-DiscoEng  │ │-ColorEx│ │-Hotkey │
+  │-ANSI    │   │           │ │        │ │-DPI   │
+  └─────────┘   └───────────┘ └────────┘ └────────┘</code></pre>
+<h3>Components</h3>
+<ul><li><strong>Bridge</strong> (<code>source/immersive/immersive-app.ts</code>) - Connects player services, queue state, library/search overlays, favorites, mix creation, and notifications</li><li><strong>Actions</strong> (<code>source/immersive/actions/playback-actions.ts</code>) - Shared play-from-search, mix creation, favorites, and saved playlist helpers</li><li><strong>UI overlays</strong> (<code>source/immersive/ui/</code>) - Search browse with type tabs, artist/album filters, adjustable limits, Shift+D download, library menu, 23-row settings overlay, two-line footer with mode status; player volume uses <code>=</code>/<span class="kbd">+</span>/<span class="kbd">-</span> (TUI parity)</li><li><strong>Renderer</strong> (<code>source/immersive/renderer/</code>) - Frame buffer, braille canvas for 2x4 pixel density, flicker-free ANSI output</li><li><strong>Visualizer</strong> (<code>source/immersive/visualizer/</code>) - Hybrid playback-synced audio bars, disco color cycling with beat detection</li><li><strong>Effects</strong> (<code>source/immersive/effects/</code>) - Particle system for disco mode, dominant color extraction</li><li><strong>Native</strong> (<code>source/immersive/native/</code>) - Console alt buffer, tray icon (<span class="kbd">icon.ico</span>) with right-click Settings/Exit menu, <span class="kbd">@bun-win32</span> DPI/hotkeys via runtime FFI loader</li></ul>
+<h3>Entry Points</h3>
+<pre><code class="lang-bash"># Development
+bun run dev:win32
+
+# From main CLI
+youtube-music-cli --win32 --search "query"
+
+# Production build
+bun run build:win32
+# Output: dist/ymc-win32.exe
+
+# Build all (bun + node + win32 + web)
+bun run build:all</code></pre>
+<h3>Build</h3>
+<p>Uses <code>bun build --compile --target bun-windows-x64</code> to produce a standalone Windows executable with the immersive bridge entry point.</p>
+<h2>Component Architecture</h2>
+<h3>Layouts</h3>
+<p>Each view has a dedicated layout component:</p>
+<ul><li><code>PlayerLayout</code> - Main player view</li><li><code>SearchLayout</code> - Search interface</li><li><code>PluginsLayout</code> - Plugin management</li><li><code>ConfigLayout</code> - Settings</li></ul>
+<h3>Ink Primitives</h3>
+<p>Components use Ink's Box and Text:</p>
+<pre><code class="lang-tsx"><Box flexDirection="column" padding={1}>
+	<Text color="green">Now Playing</Text>
+	<Text>{track.title}</Text>
+</Box></code></pre>
+<h2>Data Flow</h2>
+<pre><code class="lang-">┌──────────┐    ┌──────────┐    ┌──────────┐
+│  Input   │───▶│  Store   │───▶│   UI     │
+│(Keyboard)│    │(Reducer) │    │(React)   │
+└──────────┘    └──────────┘    └──────────┘
+                     │
+                     ▼
+               ┌──────────┐
+               │ Services │
+               │(Side FX) │
+               └──────────┘</code></pre>
+<h2>Build Process</h2>
+<ol><li><strong>TypeScript Compilation</strong> (<span class="kbd">tsc</span>)</li><li><strong>Output to <code>dist/</code></strong></li><li><strong>Entry: <code>dist/source/cli.js</code></strong></li></ol>
+<pre><code class="lang-bash">bun run build  # Runs format → lint → typecheck → tsc</code></pre>
+<h2>Testing</h2>
+<ul><li><strong>AVA</strong> - Test runner</li><li><strong>ink-testing-library</strong> - Component testing</li></ul>
+<pre><code class="lang-bash">bun run test</code></pre>
+</section>
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="../index.html" class="logo">
+          <span class="logo-mark">🎵</span>
+          <span>youtube-music-cli</span>
+        </a>
+        <p>Open-source TUI music player for YouTube Music. Built by Netfly and contributors.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="../index.html#features">Features</a></li>
+          <li><a href="../index.html#install">Install</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Shortcuts</a></li>
+          <li><a href="../docs/PLUGIN_API.html">Plugins</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Resources</h5>
+        <ul>
+          <li><a href="https://github.com/netflyapp/youtube-music-cli" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://www.npmjs.com/package/@netflyapp/youtube-music-cli" target="_blank" rel="noopener">npm</a></li>
+          <li><a href="../docs/architecture.html">Architecture</a></li>
+          <li><a href="../docs/roadmap.html">Roadmap</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Community</h5>
+        <ul>
+          <li><a href="../docs/support.html">Support</a></li>
+          <li><a href="https://github.com/sponsors/netflyapp" target="_blank" rel="noopener">Sponsor</a></li>
+          <li><a href="https://github.com/netflyapp" target="_blank" rel="noopener">Netfly</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Netfly · MIT License</span>
+      <span>Built with Ink · Powered by mpv + yt-dlp</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -54,6 +54,7 @@ export default function PlayerControls() {
 		setABLoop,
 		startRadio,
 		stopRadio,
+		clearQueue,
 	} = usePlayer();
 	const {toggleFavorite} = useFavorites();
 	const config = getConfigService();
@@ -146,6 +147,10 @@ export default function PlayerControls() {
 				name: playerState.currentTrack.title,
 			});
 		}
+	});
+
+	useKeyBinding(KEYBINDINGS.CLEAR_QUEUE, () => {
+		clearQueue();
 	});
 
 	return (

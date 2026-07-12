@@ -52,6 +52,8 @@ const initialState: PlayerState = {
 	radioIsActive: false,
 	radioSeed: null,
 	explicitQueueLength: 0,
+	radioStreamUrl: null,
+	radioStationName: null,
 };
 
 let inkSessionHistory: string[] = [];
@@ -325,14 +327,37 @@ export function playerReducer(
 				autoplay: true,
 			};
 
-		case 'STOP_RADIO':
-			return {
-				...state,
-				radioIsActive: false,
-				radioSeed: null,
-			};
+	case 'STOP_RADIO':
+		return {
+			...state,
+			radioIsActive: false,
+			radioSeed: null,
+		};
 
-		case 'RESTORE_STATE':
+	case 'PLAY_RADIO':
+		return {
+			...state,
+			currentTrack: action.track,
+			isPlaying: true,
+			progress: 0,
+			error: null,
+			playRequestId: state.playRequestId + 1,
+			queue: [],
+			queuePosition: 0,
+			radioStreamUrl: action.streamUrl,
+			radioStationName: action.stationName,
+			radioIsActive: false,
+			radioSeed: null,
+		};
+
+	case 'STOP_RADIO_STREAM':
+		return {
+			...state,
+			radioStreamUrl: null,
+			radioStationName: null,
+		};
+
+	case 'RESTORE_STATE':
 			logger.info('PlayerReducer', 'RESTORE_STATE', {
 				hasTrack: !!action.currentTrack,
 				queueLength: action.queue.length,
@@ -527,12 +552,43 @@ function PlayerManager() {
 
 		lastPlayedRequestId.current = state.playRequestId;
 
+		const isRadioStream = state.radioStreamUrl != null;
 		logger.info('PlayerManager', 'Loading track', {
 			title: track.title,
 			videoId: track.videoId,
+			isRadioStream,
 		});
 
 		const loadAndPlayTrack = async () => {
+			// Radio stream — play URL directly without YouTube extraction
+			if (isRadioStream) {
+				dispatch({category: 'SET_LOADING', loading: true});
+				try {
+					const streamUrl = state.radioStreamUrl!;
+					await playerService.play(streamUrl, {
+						volume: state.volume,
+					});
+					logger.info('PlayerManager', 'Radio stream started', {
+						station: state.radioStationName,
+					});
+					dispatch({category: 'SET_LOADING', loading: false});
+				} catch (error) {
+					logger.error('PlayerManager', 'Failed to play radio stream', {
+						error: error instanceof Error ? error.message : String(error),
+						station: state.radioStationName,
+					});
+					dispatch({
+						category: 'SET_ERROR',
+						error:
+							error instanceof Error
+								? error.message
+								: 'Failed to play radio stream',
+					});
+				}
+
+				return;
+			}
+
 			// If a detached background session exists for this exact track, reattach
 			// to the still-running mpv process instead of spawning a new one.
 			const config = getConfigService();
@@ -580,7 +636,6 @@ function PlayerManager() {
 
 					// Pass YouTube URL directly to mpv (it handles stream extraction via yt-dlp)
 					const youtubeUrl = `https://www.youtube.com/watch?v=${track.videoId}`;
-					const config = getConfigService();
 					const artists =
 						track.artists?.map(a => a.name).join(', ') ?? 'Unknown';
 

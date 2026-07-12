@@ -609,6 +609,13 @@ if (command === 'plugins') {
 				}
 			})();
 		} else {
+			if (flags.headless) {
+				console.error(
+					'--headless flag set without a play/search/playlist target. Pass a track, query, or playlist id, or drop --headless to start the TUI.',
+				);
+				process.exit(1);
+			}
+
 			void (async () => {
 				if (shouldCheckPlaybackDependencies(command, flags)) {
 					const dependencyCheck = await ensurePlaybackDependencies({
@@ -631,11 +638,6 @@ if (command === 'plugins') {
 						config.setLastVersionCheck(versionCheck.markChecked());
 
 						if (result.hasUpdate) {
-							console.log('');
-							console.log(
-								` Update available: ${APP_VERSION} → ${result.latestVersion}`,
-							);
-							console.log('Run: npm install -g @netflyapp/youtube-music-cli');
 							console.log('');
 						}
 					}

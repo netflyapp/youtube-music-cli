@@ -107,6 +107,42 @@ Key types are in `source/types/`:
 - `theme.types.ts`: Theme interface
 - `cli.types.ts`: CLI flags and options
 
+## GitHub Workflow
+
+### Local → GitHub
+
+```bash
+# Stage changes
+git add -A
+
+# Commit with a descriptive message
+git commit -m "description of changes"
+
+# Push to origin
+git push
+```
+
+### Before pushing
+
+Always run the quality checks first:
+
+```bash
+bun run typecheck    # TypeScript errors
+bun run lint         # Linting issues
+```
+
+If you want to run all checks (format + lint:fix + typecheck) before building:
+
+```bash
+bun run prebuild
+```
+
+### Branch workflow
+
+- `main` — stable, release-ready
+- Feature branches: `feat/<name>` or `fix/<name>`
+- Always rebase onto `main` before merging
+
 ## Roadmap & Priorities
 
 Consult `SUGGESTIONS.md` for the backlog and use `docs/roadmap.md` to see the in-progress work (crossfade/gapless playback, equalizer follow-ups, etc.). The README also links to this roadmap so every contributor or agent knows where to look before starting a new change.

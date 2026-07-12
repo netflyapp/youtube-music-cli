@@ -35,6 +35,8 @@ class WebServerManager {
 		radioIsActive: false,
 		radioSeed: null,
 		explicitQueueLength: 0,
+		radioStreamUrl: null,
+		radioStationName: null,
 	};
 
 	constructor() {

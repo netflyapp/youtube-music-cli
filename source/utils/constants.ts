@@ -104,6 +104,7 @@ export const KEYBINDINGS = {
 
 	// Radio
 	TOGGLE_RADIO: ['shift+x'],
+	RADIO_STATIONS: ['R'],
 
 	// Player
 	PLAY_PAUSE: [' '],

@@ -32,6 +32,7 @@ import NewReleasesLayout from './NewReleasesLayout.tsx';
 import GenresLayout from './GenresLayout.tsx';
 import AIChatView from '../ai/AIChatView.tsx';
 import StatsDashboard from '../stats/StatsDashboard.tsx';
+import RadioStationsLayout from './RadioStationsLayout.tsx';
 import {KEYBINDINGS, VIEW} from '../../utils/constants.ts';
 import {Box, useApp} from 'ink';
 import {useTerminalSize} from '../../hooks/useTerminalSize.ts';
@@ -135,6 +136,10 @@ function MainLayout() {
 		dispatch({category: 'NAVIGATE', view: VIEW.STATS});
 	}, [dispatch]);
 
+	const goToRadioStations = useCallback(() => {
+		dispatch({category: 'NAVIGATE', view: VIEW.RADIO});
+	}, [dispatch]);
+
 	const handleDetach = useCallback(() => {
 		// Detach mode: Exit CLI while keeping music playing
 		const player = getPlayerService();
@@ -193,6 +198,7 @@ function MainLayout() {
 	useKeyBinding(KEYBINDINGS.NEW_RELEASES, goToNewReleases);
 	useKeyBinding(KEYBINDINGS.GENRES, goToGenres);
 	useKeyBinding(KEYBINDINGS.STATS_VIEW, goToStats);
+	useKeyBinding(KEYBINDINGS.RADIO_STATIONS, goToRadioStations);
 	useKeyBinding(KEYBINDINGS.DETACH, handleDetach);
 	useKeyBinding(KEYBINDINGS.RESUME_BACKGROUND, handleResumeBackground);
 
@@ -291,6 +297,9 @@ function MainLayout() {
 
 			case 'stats':
 				return <StatsDashboard key="stats" />;
+
+			case 'radio':
+				return <RadioStationsLayout key="radio" />;
 
 			default:
 				return <PlayerLayout key="player-default" />;

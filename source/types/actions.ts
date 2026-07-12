@@ -211,3 +211,14 @@ export interface StopRadioAction {
 export interface ToggleRadioAction {
 	readonly category: 'TOGGLE_RADIO';
 }
+
+export interface PlayRadioAction {
+	readonly category: 'PLAY_RADIO';
+	track: Track;
+	streamUrl: string;
+	stationName: string;
+}
+
+export interface StopRadioStreamAction {
+	readonly category: 'STOP_RADIO_STREAM';
+}

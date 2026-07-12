@@ -31,6 +31,8 @@ import type {
 	SetSpeedAction,
 	StartRadioAction,
 	StopRadioAction,
+	PlayRadioAction,
+	StopRadioStreamAction,
 } from './actions.ts';
 
 export interface PlayerState {
@@ -53,6 +55,8 @@ export interface PlayerState {
 	radioIsActive: boolean;
 	radioSeed: RadioSeed | null;
 	explicitQueueLength: number;
+	radioStreamUrl: string | null;
+	radioStationName: string | null;
 }
 
 export type PlayerAction =
@@ -88,4 +92,6 @@ export type PlayerAction =
 	| import('./actions.ts').SetSubtitleAction
 	| StartRadioAction
 	| StopRadioAction
-	| import('./actions.ts').ToggleRadioAction;
+	| import('./actions.ts').ToggleRadioAction
+	| PlayRadioAction
+	| StopRadioStreamAction;

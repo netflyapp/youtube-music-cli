@@ -161,6 +161,7 @@ export default function ShortcutsBar() {
 				</Text>{' '}
 				• <Text color={autoplayColor}>{ICONS.AUTOPLAY} [Sft+T]</Text> •{' '}
 				<Text color={shortcutColor('radio')}>📡 [Shift+X]</Text> •{' '}
+				<Text color={theme.colors.text}>📻 [R]</Text> •{' '}
 				<Text color={theme.colors.text}>Releases [Sft+N]</Text> •{' '}
 				<Text color={theme.colors.text}>Genres [Sft+M]</Text> •{' '}
 				<Text color={theme.colors.text}>{ICONS.SEARCH} [/]</Text> •{' '}

@@ -78,6 +78,7 @@ export default function HomeLayout() {
 		{label: '📜 Playlists', view: VIEW.PLAYLISTS},
 		{label: '🔥 Trending', view: VIEW.TRENDING},
 		{label: '🆕 New Releases', view: VIEW.NEW_RELEASES},
+		{label: '📻 Radio', view: VIEW.RADIO},
 		{label: '❤️ Favorites', view: VIEW.FAVORITES},
 		{label: '🕒 History', view: VIEW.HISTORY},
 		{label: '🎲 Play Random Song', action: handlePlayRandom},

@@ -1,0 +1,58 @@
+{
+	"name": "youtube-music-cli",
+	"title": "YouTube Music CLI",
+	"description": "Control youtube-music-cli from Raycast — play, pause, skip, search, and manage your queue",
+	"icon": "icon.png",
+	"author": "miloszzajac",
+	"license": "MIT",
+	"commands": [
+		{
+			"name": "next-track",
+			"title": "Next Track",
+			"description": "Skip to the next track in the queue",
+			"mode": "no-view"
+		},
+		{
+			"name": "previous-track",
+			"title": "Previous Track",
+			"description": "Go back to the previous track",
+			"mode": "no-view"
+		},
+		{
+			"name": "toggle-playback",
+			"title": "Toggle Playback",
+			"description": "Play or pause the current track",
+			"mode": "no-view"
+		},
+		{
+			"name": "controller",
+			"title": "Player Controller",
+			"description": "View and control the currently playing track",
+			"mode": "view"
+		},
+		{
+			"name": "search",
+			"title": "Search Songs",
+			"description": "Search YouTube Music and play tracks",
+			"mode": "view"
+		}
+	],
+	"dependencies": {
+		"@raycast/api": "^1.104.22",
+		"ws": "^8.21.0"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.0",
+		"@types/react": "^19.0.0",
+		"@types/ws": "^8.18.1",
+		"eslint": "^9.0.0",
+		"prettier": "^3.0.0",
+		"typescript": "^5.8.0"
+	},
+	"scripts": {
+		"build": "ray build",
+		"dev": "ray develop",
+		"lint": "ray lint",
+		"publish": "npx @raycast/api@latest publish"
+	}
+}

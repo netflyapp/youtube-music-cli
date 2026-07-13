@@ -15,8 +15,9 @@ Built with React/Ink — keyboard-driven, plugin-extensible, works offline.
 [![Bun](https://img.shields.io/badge/Runtime-Bun%20%7C%20Node-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Fork of involvex/youtube-music-cli](https://img.shields.io/badge/Fork%20of-involvex%2Fyoutube--music--cli-orange?style=flat-square)](https://github.com/involvex/youtube-music-cli)
 [![Personal Use Only](https://img.shields.io/badge/Use-Personal%20%2F%20Hobby%20Only-red?style=flat-square)](DISCLAIMER.md)
+[![Website](https://img.shields.io/badge/Website-netflyapp.github.io%2Fyoutube--music--cli-ff0033?style=flat-square)](https://netflyapp.github.io/youtube-music-cli/)
 
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Keyboard Shortcuts](#️-keyboard-shortcuts) • [Configuration](#️-configuration) • [Plugins](#-plugins) • [Contributing](#-contributing)
+[Website](https://netflyapp.github.io/youtube-music-cli/) • [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Keyboard Shortcuts](#️-keyboard-shortcuts) • [Configuration](#️-configuration) • [Plugins](#-plugins) • [Raycast](#-raycast-extension) • [Contributing](#-contributing)
 
 </div>
 
@@ -49,6 +50,7 @@ Built with React/Ink — keyboard-driven, plugin-extensible, works offline.
 | 🏷️ **Metadata Tagging**  | Auto-tag title/artist/album with optional cover art                     |
 | ⚡️ **Shell Completions** | Tab-complete via `ymc completions <bash\|zsh\|fish\|powershell>`        |
 | 📊 **Listening Stats**   | Track your listening habits with a built-in dashboard                   |
+| 🚀 **Raycast Extension** | Search, play, and control playback from Raycast — no terminal needed    |
 
 ---
 
@@ -321,6 +323,30 @@ bun run build:win32 && dist/ymc-win32.exe  # compiled binary
 
 ---
 
+## 🚀 Raycast Extension
+
+Control youtube-music-cli directly from [Raycast](https://raycast.com) — search, play, and manage playback without leaving your launcher.
+
+```bash
+# 1. Start the web server (required)
+ymc web
+
+# 2. In Raycast: Add Extension from local → select integrations/raycast
+```
+
+### Commands
+
+| Command               | Description             |
+| --------------------- | ----------------------- |
+| Search YouTube Music  | Find and play tracks    |
+| Now Playing           | View current track info |
+| Play / Pause          | Toggle playback         |
+| Next / Previous Track | Skip tracks             |
+
+The CLI runs a lightweight HTTP server (`web/server.ts`) on `localhost:3737`. The Raycast extension communicates with it via REST API.
+
+---
+
 ## 🔧 Troubleshooting
 
 **`mpv` not found** — ensure `mpv` is installed and on your PATH: `mpv --version`
@@ -383,8 +409,9 @@ youtube-music-cli/
 
 ## 🗺️ Roadmap
 
-See [`TASK.md`](TASK.md) for the full backlog. Next up:
+See [`TASK.md`](TASK.md) for the full backlog. Recent additions:
 
+- 🚀 **Raycast Extension** — Search, play, and control playback from Raycast
 - 🤖 **Smart Recommendations** — AI-powered suggestions based on listening history
 - 📻 **Playlist Radio Mode** — endless radio from any playlist
 - 📦 **Batch Downloads** — download entire playlists with progress tracking

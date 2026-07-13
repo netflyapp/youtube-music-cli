@@ -35,6 +35,7 @@ This software is intended **exclusively for personal, non-commercial use** by in
 - ✅ Do not use it to generate revenue or commercial gain
 
 **Do NOT use this software to:**
+
 - ❌ Redistribute or publicly share downloaded/cached audio files
 - ❌ Use downloaded content for commercial purposes
 - ❌ Build a competing commercial service based on this tool
@@ -51,6 +52,7 @@ The **Offline Mode** and **Download** features save audio content to local stora
 - The legality varies significantly by country — **check your local copyright law**
 
 **Best practice:**
+
 - Only cache/download tracks you are actively streaming with an active subscription
 - Do not keep cached files indefinitely — treat them as temporary playback buffers
 - Do not share cached files with others
@@ -63,11 +65,11 @@ The `offlineAutoCache` option is **disabled by default** for this reason.
 
 This software depends on third-party tools:
 
-| Tool | License | Legal status |
-|---|---|---|
-| `yt-dlp` | Unlicense | Legally contested; EFF-defended; active on GitHub with 90k+ stars |
-| `mpv` | GPL v2+ | Open-source, widely distributed |
-| `youtubei.js` | MIT | Reverse-engineers YouTube's internal Innertube API |
+| Tool          | License   | Legal status                                                      |
+| ------------- | --------- | ----------------------------------------------------------------- |
+| `yt-dlp`      | Unlicense | Legally contested; EFF-defended; active on GitHub with 90k+ stars |
+| `mpv`         | GPL v2+   | Open-source, widely distributed                                   |
+| `youtubei.js` | MIT       | Reverse-engineers YouTube's internal Innertube API                |
 
 Using `yt-dlp` may itself violate YouTube's ToS and potentially local laws depending on jurisdiction. The author of this project is not responsible for how these dependencies are used.
 
@@ -89,12 +91,12 @@ The full software license is in [`LICENSE`](LICENSE).
 
 This project operates in the same legal space as many widely-used open-source tools:
 
-| Project | Stars | Status |
-|---|---|---|
-| `yt-dlp` | 90k+ ⭐ | Active, defended by EFF against RIAA DMCA (2020) |
-| `youtube-dl` | 130k+ ⭐ | Active after GitHub restored it post-DMCA |
-| `spotify-tui` | 16k+ ⭐ | Legal (uses official Spotify API) |
-| `involvex/youtube-music-cli` | Original fork base | Active, published on npm |
+| Project                      | Stars              | Status                                           |
+| ---------------------------- | ------------------ | ------------------------------------------------ |
+| `yt-dlp`                     | 90k+ ⭐            | Active, defended by EFF against RIAA DMCA (2020) |
+| `youtube-dl`                 | 130k+ ⭐           | Active after GitHub restored it post-DMCA        |
+| `spotify-tui`                | 16k+ ⭐            | Legal (uses official Spotify API)                |
+| `involvex/youtube-music-cli` | Original fork base | Active, published on npm                         |
 
 YouTube has historically pursued action against **commercial** piracy services, not personal open-source hobby projects. That said, this is not legal advice and the situation can change.
 
@@ -106,5 +108,5 @@ If you believe this project infringes on your rights or you have a legal concern
 
 ---
 
-*This disclaimer was last updated: 2026-07-12*
-*This is not legal advice. If you need legal counsel, consult a licensed attorney in your jurisdiction.*
+_This disclaimer was last updated: 2026-07-12_
+_This is not legal advice. If you need legal counsel, consult a licensed attorney in your jurisdiction._

@@ -31,30 +31,31 @@ Built with React/Ink — keyboard-driven, plugin-extensible, works offline.
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| 🎨 **Beautiful TUI** | Rich terminal interface built with React and Ink |
-| 🔍 **Search** | Find songs, albums, artists, and playlists instantly |
-| 📋 **Queue Management** | Build and manage your playback queue with ease |
-| ❤️ **Favorites** | Mark tracks with `f`, view them with `Shift+F` |
-| 🔀 **Shuffle & Repeat** | Multiple playback modes: off, all, one |
-| 🎚️ **Volume Control** | Fine-grained volume adjustment per-session |
-| 💡 **Smart Suggestions** | Discover related tracks and radio stations |
-| 🎨 **Themes** | Dark, Light, Midnight, Matrix — switch on the fly |
-| 🔌 **Plugin System** | Extend with adblock, lyrics, Last.fm scrobbling, Discord RPC |
-| ⌨️ **Keyboard-Driven** | Efficient vim-style navigation — no mouse needed |
-| 🖥️ **Immersive Mode** | Fullscreen Windows TUI with audio visualizer and disco effects |
-| 💾 **Downloads** | Save tracks/playlists/artists with `Shift+D`, auto-tagged with metadata |
-| 📴 **Offline Mode** | Cache tracks locally with LRU eviction, toggle with `Shift+O` |
-| 🏷️ **Metadata Tagging** | Auto-tag title/artist/album with optional cover art |
-| ⚡️ **Shell Completions** | Tab-complete via `ymc completions <bash\|zsh\|fish\|powershell>` |
-| 📊 **Listening Stats** | Track your listening habits with a built-in dashboard |
+| Feature                  | Description                                                             |
+| ------------------------ | ----------------------------------------------------------------------- |
+| 🎨 **Beautiful TUI**     | Rich terminal interface built with React and Ink                        |
+| 🔍 **Search**            | Find songs, albums, artists, and playlists instantly                    |
+| 📋 **Queue Management**  | Build and manage your playback queue with ease                          |
+| ❤️ **Favorites**         | Mark tracks with `f`, view them with `Shift+F`                          |
+| 🔀 **Shuffle & Repeat**  | Multiple playback modes: off, all, one                                  |
+| 🎚️ **Volume Control**    | Fine-grained volume adjustment per-session                              |
+| 💡 **Smart Suggestions** | Discover related tracks and radio stations                              |
+| 🎨 **Themes**            | Dark, Light, Midnight, Matrix — switch on the fly                       |
+| 🔌 **Plugin System**     | Extend with adblock, lyrics, Last.fm scrobbling, Discord RPC            |
+| ⌨️ **Keyboard-Driven**   | Efficient vim-style navigation — no mouse needed                        |
+| 🖥️ **Immersive Mode**    | Fullscreen Windows TUI with audio visualizer and disco effects          |
+| 💾 **Downloads**         | Save tracks/playlists/artists with `Shift+D`, auto-tagged with metadata |
+| 📴 **Offline Mode**      | Cache tracks locally with LRU eviction, toggle with `Shift+O`           |
+| 🏷️ **Metadata Tagging**  | Auto-tag title/artist/album with optional cover art                     |
+| ⚡️ **Shell Completions** | Tab-complete via `ymc completions <bash\|zsh\|fish\|powershell>`        |
+| 📊 **Listening Stats**   | Track your listening habits with a built-in dashboard                   |
 
 ---
 
 ## 📋 Prerequisites
 
 **Required:**
+
 - [mpv](https://mpv.io/) — media player backend for audio playback
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) — YouTube audio stream extraction
 
@@ -157,15 +158,15 @@ ymc pause / resume / skip / back  # playback control
 
 ### Launch Options
 
-| Flag | Short | Description |
-|---|---|---|
-| `--theme` | `-t` | `dark`, `light`, `midnight`, `matrix` |
-| `--volume` | `-v` | Initial volume 0–100 |
-| `--shuffle` | `-s` | Enable shuffle on startup |
-| `--repeat` | `-r` | `off`, `all`, `one` |
-| `--headless` | | Run without TUI |
-| `--win32` | | Immersive fullscreen (Windows only) |
-| `--help` | `-h` | Show help |
+| Flag         | Short | Description                           |
+| ------------ | ----- | ------------------------------------- |
+| `--theme`    | `-t`  | `dark`, `light`, `midnight`, `matrix` |
+| `--volume`   | `-v`  | Initial volume 0–100                  |
+| `--shuffle`  | `-s`  | Enable shuffle on startup             |
+| `--repeat`   | `-r`  | `off`, `all`, `one`                   |
+| `--headless` |       | Run without TUI                       |
+| `--win32`    |       | Immersive fullscreen (Windows only)   |
+| `--help`     | `-h`  | Show help                             |
 
 ```bash
 ymc --theme=matrix --volume=80
@@ -188,40 +189,40 @@ ymc completions powershell | Out-File -Encoding utf8 $PROFILE # PowerShell
 
 ### Global
 
-| Key | Action |
-|---|---|
-| `?` | Show help |
-| `/` | Search |
-| `p` | Plugin manager |
-| `Shift+F` | Favorites view |
-| `g` | Suggestions / Radio |
-| `,` | Settings |
-| `q` | Quit |
+| Key       | Action              |
+| --------- | ------------------- |
+| `?`       | Show help           |
+| `/`       | Search              |
+| `p`       | Plugin manager      |
+| `Shift+F` | Favorites view      |
+| `g`       | Suggestions / Radio |
+| `,`       | Settings            |
+| `q`       | Quit                |
 
 ### Playback
 
-| Key | Action |
-|---|---|
-| `Space` | Play / Pause |
-| `n` / `→` | Next track |
-| `b` / `←` | Previous track |
-| `Shift+→` | Seek forward 10s |
-| `Shift+←` | Seek backward 10s |
-| `=` / `-` | Volume up / down |
-| `f` | Toggle favorite |
-| `s` | Toggle shuffle |
-| `r` | Cycle repeat mode |
-| `Shift+O` | Toggle Offline Mode |
+| Key       | Action                             |
+| --------- | ---------------------------------- |
+| `Space`   | Play / Pause                       |
+| `n` / `→` | Next track                         |
+| `b` / `←` | Previous track                     |
+| `Shift+→` | Seek forward 10s                   |
+| `Shift+←` | Seek backward 10s                  |
+| `=` / `-` | Volume up / down                   |
+| `f`       | Toggle favorite                    |
+| `s`       | Toggle shuffle                     |
+| `r`       | Cycle repeat mode                  |
+| `Shift+O` | Toggle Offline Mode                |
 | `Shift+D` | Download selected track / playlist |
 
 ### Navigation
 
-| Key | Action |
-|---|---|
-| `↑` / `k` | Move up |
+| Key       | Action    |
+| --------- | --------- |
+| `↑` / `k` | Move up   |
 | `↓` / `j` | Move down |
-| `Enter` | Select |
-| `Esc` | Back |
+| `Enter`   | Select    |
+| `Esc`     | Back      |
 
 ---
 
@@ -231,35 +232,35 @@ Config is stored at `~/.youtube-music-cli/config.json` (created automatically on
 
 ```json
 {
-  "theme": "dark",
-  "volume": 70,
-  "shuffle": false,
-  "repeat": "off",
-  "streamQuality": "high",
-  "downloadsEnabled": false,
-  "downloadDirectory": "~/Music/youtube-music-cli",
-  "downloadFormat": "mp3",
-  "offlineMode": false,
-  "offlineAutoCache": false,
-  "maxCacheSizeMB": 500
+	"theme": "dark",
+	"volume": 70,
+	"shuffle": false,
+	"repeat": "off",
+	"streamQuality": "high",
+	"downloadsEnabled": false,
+	"downloadDirectory": "~/Music/youtube-music-cli",
+	"downloadFormat": "mp3",
+	"offlineMode": false,
+	"offlineAutoCache": false,
+	"maxCacheSizeMB": 500
 }
 ```
 
 ### Stream Quality
 
-| Value | Bitrate | Best for |
-|---|---|---|
-| `low` | ~64 kbps | Slow connections |
-| `medium` | ~128 kbps | Balanced |
-| `high` | 256 kbps+ | Best quality |
+| Value    | Bitrate   | Best for         |
+| -------- | --------- | ---------------- |
+| `low`    | ~64 kbps  | Slow connections |
+| `medium` | ~128 kbps | Balanced         |
+| `high`   | 256 kbps+ | Best quality     |
 
 ### Offline Mode
 
-| Option | Default | Description |
-|---|---|---|
-| `offlineMode` | `false` | Force offline — only play cached tracks |
-| `offlineAutoCache` | `false` | Auto-cache tracks as you play them |
-| `maxCacheSizeMB` | `500` | Max cache size in MB (LRU eviction) |
+| Option             | Default | Description                             |
+| ------------------ | ------- | --------------------------------------- |
+| `offlineMode`      | `false` | Force offline — only play cached tracks |
+| `offlineAutoCache` | `false` | Auto-cache tracks as you play them      |
+| `maxCacheSizeMB`   | `500`   | Max cache size in MB (LRU eviction)     |
 
 Cache lives in `<downloadDirectory>/cache/`. Press `Shift+O` to toggle at runtime.
 
@@ -286,12 +287,12 @@ ymc plugins remove my-plugin
 
 ### Built-in Plugins
 
-| Plugin | Description |
-|---|---|
-| `adblock` | Block ads and sponsored content |
-| `lyrics` | Display synchronized lyrics |
-| `scrobbler` | Scrobble plays to Last.fm |
-| `discord-rpc` | Discord Rich Presence integration |
+| Plugin          | Description                           |
+| --------------- | ------------------------------------- |
+| `adblock`       | Block ads and sponsored content       |
+| `lyrics`        | Display synchronized lyrics           |
+| `scrobbler`     | Scrobble plays to Last.fm             |
+| `discord-rpc`   | Discord Rich Presence integration     |
 | `notifications` | Desktop notifications on track change |
 
 ### Developing a Plugin
@@ -369,14 +370,14 @@ youtube-music-cli/
 
 ### Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js 18+ / [Bun](https://bun.sh/) |
-| UI | [Ink](https://github.com/vadimdemedes/ink) (React for CLI) |
-| Language | TypeScript 5 |
-| Audio | mpv + yt-dlp |
-| API | YouTube Music Innertube (youtubei.js) |
-| Testing | AVA |
+| Layer    | Technology                                                 |
+| -------- | ---------------------------------------------------------- |
+| Runtime  | Node.js 18+ / [Bun](https://bun.sh/)                       |
+| UI       | [Ink](https://github.com/vadimdemedes/ink) (React for CLI) |
+| Language | TypeScript 5                                               |
+| Audio    | mpv + yt-dlp                                               |
+| API      | YouTube Music Innertube (youtubei.js)                      |
+| Testing  | AVA                                                        |
 
 ---
 

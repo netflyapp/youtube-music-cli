@@ -13,7 +13,7 @@ A clear and concise description of the feature you'd like to see.
 ## 🤔 Problem / Motivation
 
 What problem does this solve? Why is this feature needed?
-e.g. *I often want to do X but there's no way to do it currently.*
+e.g. _I often want to do X but there's no way to do it currently._
 
 ## 🎯 Proposed Solution
 

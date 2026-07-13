@@ -25,7 +25,7 @@
 	"icon": "assets/icon2.PNG",
 	"sponsor": {
 		"url": "https://github.com/sponsors/netflyapp"
-			},
+	},
 	"homepage": "https://github.com/netflyapp/youtube-music-cli#readme",
 	"keywords": [
 		"cli",

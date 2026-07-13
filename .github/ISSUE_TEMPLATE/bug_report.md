@@ -26,15 +26,15 @@ What actually happened.
 
 ## 🖥️ Environment
 
-| Field | Value |
-|---|---|
-| OS | e.g. macOS 14.5 / Ubuntu 22.04 / Windows 11 |
-| Node.js version | `node --version` |
-| Bun version (if used) | `bun --version` |
-| CLI version | `ymc --version` |
-| mpv version | `mpv --version` |
-| yt-dlp version | `yt-dlp --version` |
-| Terminal emulator | e.g. iTerm2, Windows Terminal, Alacritty |
+| Field                 | Value                                       |
+| --------------------- | ------------------------------------------- |
+| OS                    | e.g. macOS 14.5 / Ubuntu 22.04 / Windows 11 |
+| Node.js version       | `node --version`                            |
+| Bun version (if used) | `bun --version`                             |
+| CLI version           | `ymc --version`                             |
+| mpv version           | `mpv --version`                             |
+| yt-dlp version        | `yt-dlp --version`                          |
+| Terminal emulator     | e.g. iTerm2, Windows Terminal, Alacritty    |
 
 ## 📸 Screenshots / Logs
 

@@ -343,6 +343,49 @@ bun run build:win32
 bun run build:all</code></pre>
 <h3>Build</h3>
 <p>Uses <code>bun build --compile --target bun-windows-x64</code> to produce a standalone Windows executable with the immersive bridge entry point.</p>
+<h2>Web Server &amp; Raycast Integration</h2>
+<p>The web server (<code>web/server.ts</code>) provides a lightweight HTTP API that powers the Raycast extension. It runs alongside the CLI and exposes endpoints for search, playback control, and queue management.</p>
+<h3>Architecture</h3>
+<pre><code class="lang-">┌──────────────────────┐     HTTP      ┌──────────────────────┐
+│   Raycast Extension  │ ◄───────────► │   Web Server         │
+│   (TypeScript)       │               │   (Express / http)   │
+│                      │               │                      │
+│  ┌────────────────┐  │   /api/search │  ┌────────────────┐  │
+│  │ Search Command │──┼──────────────►│  │ Search Handler │  │
+│  └────────────────┘  │               │  └───────┬────────┘  │
+│  ┌────────────────┐  │   /api/play   │          │            │
+│  │ Play Command   │──┼──────────────►│          ▼            │
+│  └────────────────┘  │               │  ┌────────────────┐  │
+│  ┌────────────────┐  │   /api/status │  │ PlayerService  │  │
+│  │ Now Playing    │──┼──────────────►│  └────────────────┘  │
+│  │ (Menu Bar)     │  │               │                      │
+│  └────────────────┘  │               │  ┌────────────────┐  │
+│  ┌────────────────┐  │               │  │ MusicService   │  │
+│  │ Toggle PlayPause│ │               │  └────────────────┘  │
+│  │ Next/Prev Track │ │               │                      │
+│  └────────────────┘  │               └──────────────────────┘
+└──────────────────────┘</code></pre>
+<h3>API Endpoints</h3>
+<table>
+<thead><tr><th>Endpoint</th><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>/api/search</code></td><td>GET</td><td>Search YouTube Music with query param</td></tr>
+<tr><td><code>/api/play</code></td><td>POST</td><td>Play a track by videoId</td></tr>
+<tr><td><code>/api/status</code></td><td>GET</td><td>Get current playback state</td></tr>
+<tr><td><code>/api/queue</code></td><td>GET</td><td>Get current queue</td></tr>
+<tr><td><code>/api/next</code></td><td>POST</td><td>Skip to next track</td></tr>
+<tr><td><code>/api/prev</code></td><td>POST</td><td>Go to previous track</td></tr>
+<tr><td><code>/api/toggle-play</code></td><td>POST</td><td>Toggle play/pause</td></tr>
+</tbody>
+</table>
+<h3>Key Files</h3>
+<ul>
+<li><code>web/server.ts</code> — Express HTTP server with API routes</li>
+<li><code>web/client.ts</code> — Typed API client used by Raycast</li>
+<li><code>integrations/raycast/package.json</code> — Raycast extension manifest</li>
+<li><code>integrations/raycast/src/index.tsx</code> — Raycast commands (Search, Play, Now Playing)</li>
+<li><code>integrations/raycast/src/client.ts</code> — Raycast API client</li>
+</ul>
 <h2>Component Architecture</h2>
 <h3>Layouts</h3>
 <p>Each view has a dedicated layout component:</p>

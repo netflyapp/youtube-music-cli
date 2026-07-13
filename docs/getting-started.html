@@ -262,6 +262,23 @@ youtube-music-cli play dQw4w9WgXcQ
 
 # Headless mode (no TUI)
 youtube-music-cli search "music" --headless</code></pre>
+<h2 id="raycast-integration">Raycast Extension</h2>
+<p>Control youtube-music-cli from Raycast — search, play, and manage playback without leaving your launcher.</p>
+<h3>Setup</h3>
+<ol>
+<li>Install the CLI globally: <code>npm install -g @netflyapp/youtube-music-cli</code></li>
+<li>Start the web server: <code>ymc web</code> (runs on <code>http://localhost:3737</code>)</li>
+<li>Open Raycast → Extensions → Add from local → select <code>integrations/raycast</code></li>
+</ol>
+<h3>Available Commands</h3>
+<ul>
+<li><strong>Search YouTube Music</strong> — Search and play tracks directly from Raycast</li>
+<li><strong>Now Playing</strong> — View current track info in Raycast</li>
+<li><strong>Play/Pause</strong> — Toggle playback</li>
+<li><strong>Next / Previous Track</strong> — Skip tracks</li>
+</ul>
+<h3>How It Works</h3>
+<p>The CLI runs a lightweight HTTP server (<code>web/server.ts</code>) that exposes REST API endpoints. The Raycast extension communicates with this server to search YouTube Music, control playback, and display the current track. Both the CLI and the extension must be on the same machine.</p>
 <h2>Next Steps</h2>
 <ul><li><a href="./configuration">Configure your settings</a></li><li><a href="./keyboard-shortcuts">Learn all keyboard shortcuts</a></li><li><a href="./PLUGIN_DEVELOPMENT">Install plugins</a></li></ul>
 </section>

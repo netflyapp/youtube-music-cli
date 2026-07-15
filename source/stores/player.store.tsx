@@ -1097,12 +1097,11 @@ export function PlayerProvider({children}: {children: ReactNode}) {
 		};
 	}, [dispatch]);
 
-	// Broadcast state changes to web clients
+	// Broadcast state changes to web clients and sync internal state
 	useEffect(() => {
 		const webServerManager = getWebServerManager();
 		if (webServerManager.isServerRunning()) {
-			const streamingService = getWebStreamingService();
-			streamingService.onStateChange(state);
+			webServerManager.updateState(state);
 		}
 	}, [state]);
 

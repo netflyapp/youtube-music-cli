@@ -211,3 +211,8 @@ export interface StopRadioAction {
 export interface ToggleRadioAction {
 	readonly category: 'TOGGLE_RADIO';
 }
+
+export interface ToggleFavoriteAction {
+	readonly category: 'TOGGLE_FAVORITE';
+	track?: Track;
+}

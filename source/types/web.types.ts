@@ -13,7 +13,8 @@ export type ServerMessage =
 	| ImportProgressMessage
 	| ImportResultMessage
 	| SearchResultsMessage
-	| ConfigUpdateMessage;
+	| ConfigUpdateMessage
+	| FavoritesMessage;
 
 /** Player state update message */
 export interface StateUpdateMessage {
@@ -55,6 +56,12 @@ export interface ImportResultMessage {
 	data: ImportResult;
 }
 
+/** Favorites list message */
+export interface FavoritesMessage {
+	type: 'favorites';
+	tracks: Track[];
+}
+
 /** Search results message */
 export interface SearchResultsMessage {
 	type: 'search-results';
@@ -79,7 +86,8 @@ export type ClientMessage =
 	| AuthRequestMessage
 	| ImportRequestMessage
 	| SearchRequestMessage
-	| ConfigUpdateRequestMessage;
+	| ConfigUpdateRequestMessage
+	| FavoritesRequestMessage;
 
 /** Command message from client */
 export interface CommandMessage {
@@ -99,6 +107,11 @@ export interface ImportRequestMessage {
 	source: 'spotify' | 'youtube';
 	url: string;
 	name?: string;
+}
+
+/** Favorites request from client */
+export interface FavoritesRequestMessage {
+	type: 'favorites-request';
 }
 
 /** Search request from client */

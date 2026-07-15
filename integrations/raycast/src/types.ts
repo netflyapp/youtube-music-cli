@@ -43,4 +43,5 @@ export type PlayerAction =
 	| {category: 'VOLUME_DOWN'}
 	| {category: 'TOGGLE_SHUFFLE'}
 	| {category: 'TOGGLE_REPEAT'}
+	| {category: 'TOGGLE_FAVORITE'; track?: Track}
 	| {category: 'PLAY'; track: Track};

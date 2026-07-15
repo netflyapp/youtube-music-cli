@@ -5,6 +5,24 @@
 	"icon": "icon.png",
 	"author": "miloszzajac",
 	"license": "MIT",
+	"preferences": [
+		{
+			"name": "host",
+			"title": "Server Host",
+			"description": "YouTube Music CLI server hostname",
+			"type": "textfield",
+			"default": "localhost",
+			"required": false
+		},
+		{
+			"name": "port",
+			"title": "Server Port",
+			"description": "YouTube Music CLI server port",
+			"type": "textfield",
+			"default": "8080",
+			"required": false
+		}
+	],
 	"commands": [
 		{
 			"name": "next-track",
@@ -22,6 +40,18 @@
 			"name": "toggle-playback",
 			"title": "Toggle Playback",
 			"description": "Play or pause the current track",
+			"mode": "no-view"
+		},
+		{
+			"name": "favorites",
+			"title": "Favorites",
+			"description": "View and manage your favorite tracks",
+			"mode": "view"
+		},
+		{
+			"name": "add-to-favorites",
+			"title": "Add to Favorites",
+			"description": "Add the currently playing track to favorites",
 			"mode": "no-view"
 		},
 		{

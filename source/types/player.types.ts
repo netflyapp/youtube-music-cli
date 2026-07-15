@@ -88,4 +88,5 @@ export type PlayerAction =
 	| import('./actions.ts').SetSubtitleAction
 	| StartRadioAction
 	| StopRadioAction
-	| import('./actions.ts').ToggleRadioAction;
+	| import('./actions.ts').ToggleRadioAction
+	| import('./actions.ts').ToggleFavoriteAction;

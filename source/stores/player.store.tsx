@@ -73,6 +73,11 @@ export function playerReducer(
 				progress: 0,
 				error: null,
 				playRequestId: state.playRequestId + 1,
+				queue:
+					state.queue.length === 0 && action.track
+						? [action.track]
+						: state.queue,
+				queuePosition: state.queue.length === 0 ? 0 : state.queuePosition,
 				explicitQueueLength:
 					state.queue.length > 0 ? state.explicitQueueLength || 1 : 1,
 			};

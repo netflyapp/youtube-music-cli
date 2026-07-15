@@ -219,6 +219,13 @@ export default function Controller() {
 							/>
 							<ActionPanel.Section title="Playback">
 								<Action
+									title="Add to Favorites"
+									icon={Icon.Heart}
+									onAction={() =>
+										run({category: 'TOGGLE_FAVORITE'}, 'Toggled favorite')
+									}
+								/>
+								<Action
 									title="Volume Up"
 									icon={Icon.SpeakerHigh}
 									onAction={() =>

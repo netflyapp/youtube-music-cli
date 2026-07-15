@@ -24,6 +24,7 @@ interface WebSocketServerOptions {
 		query: string,
 		searchType: 'all' | 'songs' | 'artists' | 'albums' | 'playlists',
 	) => void;
+	onFavoritesRequest?: () => void;
 	onConfigUpdate?: (config: Record<string, unknown>) => void;
 }
 
@@ -43,6 +44,7 @@ class WebSocketServerClass {
 		query: string,
 		searchType: 'all' | 'songs' | 'artists' | 'albums' | 'playlists',
 	) => void;
+	private onFavoritesRequest?: () => void;
 	private onConfigUpdate?: (config: Record<string, unknown>) => void;
 
 	constructor() {
@@ -64,6 +66,7 @@ class WebSocketServerClass {
 		this.onCommand = options.onCommand;
 		this.onImportRequest = options.onImportRequest;
 		this.onSearchRequest = options.onSearchRequest;
+		this.onFavoritesRequest = options.onFavoritesRequest;
 		this.onConfigUpdate = options.onConfigUpdate;
 
 		logger.info('WebSocketServer', 'Starting server', {
@@ -232,6 +235,12 @@ class WebSocketServerClass {
 			case 'search-request':
 				if (this.onSearchRequest) {
 					this.onSearchRequest(message.query, message.searchType);
+				}
+				break;
+
+			case 'favorites-request':
+				if (this.onFavoritesRequest) {
+					this.onFavoritesRequest();
 				}
 				break;
 

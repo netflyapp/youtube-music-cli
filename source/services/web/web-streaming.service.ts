@@ -217,6 +217,20 @@ class WebStreamingService {
 	}
 
 	/**
+	 * Broadcast the full player state immediately, bypassing delta and throttle.
+	 * Used for command responses where the client expects a state-update even
+	 * when nothing changed (e.g. TOGGLE_FAVORITE).
+	 */
+	forceBroadcast(state: PlayerState): void {
+		this.prevState = {...state};
+		this.lastUpdateTime = Date.now();
+		this.broadcast({
+			type: 'state-update',
+			state,
+		});
+	}
+
+	/**
 	 * Update and broadcast player state (throttled)
 	 */
 	onStateChange(state: PlayerState): void {

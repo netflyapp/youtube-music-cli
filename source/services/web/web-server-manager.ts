@@ -4,6 +4,7 @@ import type {PlayerState, PlayerAction} from '../../types/player.types.ts';
 import {getWebSocketServer} from './websocket.server.ts';
 import {getWebStreamingService} from './web-streaming.service.ts';
 import {getConfigService} from '../config/config.service.ts';
+import {getFavoritesManager} from '../favorites/favorites.service.ts';
 import {getImportService} from '../import/import.service.ts';
 import {getPlayerService} from '../player/player.service.ts';
 import {getSearchService} from '../youtube-music/search.service.ts';
@@ -104,10 +105,14 @@ class WebServerManager {
 				onCommand: this.handleCommand.bind(this),
 				onImportRequest: this.handleImportRequest.bind(this),
 				onSearchRequest: this.handleSearchRequest.bind(this),
+				onFavoritesRequest: this.handleFavoritesRequest.bind(this),
 				onConfigUpdate: this.handleConfigUpdate.bind(this),
 			});
 
 			this.isRunning = true;
+
+			// Broadcast initial state so new clients receive it on connect
+			this.broadcastState();
 
 			// Set up graceful shutdown
 			this.setupShutdownHooks();
@@ -184,6 +189,11 @@ class WebServerManager {
 		switch (action.category) {
 			case 'PLAY': {
 				if (action.track) {
+					if (this.internalState.queue.length === 0) {
+						this.internalState.queue = [action.track];
+						this.internalState.queuePosition = 0;
+					}
+
 					this.internalState.currentTrack = action.track;
 					this.internalState.isPlaying = true;
 					this.internalState.progress = 0;
@@ -252,15 +262,36 @@ class WebServerManager {
 			}
 			case 'PREVIOUS': {
 				const prevPosition = this.internalState.queuePosition - 1;
-				if (prevPosition < 0) break;
 				if (this.internalState.progress > 3) {
+					const youtubeUrl = this.internalState.currentTrack
+						? `https://www.youtube.com/watch?v=${this.internalState.currentTrack.videoId}`
+						: null;
+					if (youtubeUrl) {
+						void playerService.play(youtubeUrl, {
+							volume: this.internalState.volume,
+							volumeFadeDuration: config.get('volumeFadeDuration'),
+						});
+					}
+
 					this.internalState.progress = 0;
 					break;
 				}
+
+				if (prevPosition < 0) break;
+
 				this.internalState.queuePosition = prevPosition;
 				this.internalState.currentTrack =
 					this.internalState.queue[prevPosition] ?? null;
 				this.internalState.progress = 0;
+
+				if (this.internalState.currentTrack) {
+					const youtubeUrl = `https://www.youtube.com/watch?v=${this.internalState.currentTrack.videoId}`;
+					void playerService.play(youtubeUrl, {
+						volume: this.internalState.volume,
+						volumeFadeDuration: config.get('volumeFadeDuration'),
+					});
+				}
+
 				break;
 			}
 			case 'SEEK':
@@ -381,6 +412,27 @@ class WebServerManager {
 					this.internalState.isLoading = false;
 				}
 				break;
+			case 'TOGGLE_FAVORITE': {
+				const trackToToggle = action.track ?? this.internalState.currentTrack;
+				if (trackToToggle) {
+					const favoritesManager = getFavoritesManager();
+					favoritesManager
+						.toggle(trackToToggle)
+						.then(() => {
+							const streamingService = getWebStreamingService();
+							streamingService.broadcast({
+								type: 'favorites',
+								tracks: favoritesManager.getAllTracks(),
+							});
+						})
+						.catch((err: unknown) => {
+							logger.error('WebServerManager', 'Failed to toggle favorite', {
+								error: err instanceof Error ? err.message : String(err),
+							});
+						});
+				}
+				break;
+			}
 			default:
 				logger.debug('WebServerManager', 'Unhandled command category', {
 					category: (action as {category: string}).category,
@@ -412,6 +464,28 @@ class WebServerManager {
 			logger.error('WebServerManager', 'Import failed', {
 				source,
 				url,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
+	/**
+	 * Handle favorites request from web client
+	 */
+	private async handleFavoritesRequest(): Promise<void> {
+		logger.debug('WebServerManager', 'Favorites request from client');
+
+		try {
+			const favoritesManager = getFavoritesManager();
+			await favoritesManager.ensureLoaded();
+
+			const streamingService = getWebStreamingService();
+			streamingService.broadcast({
+				type: 'favorites',
+				tracks: favoritesManager.getAllTracks(),
+			});
+		} catch (error) {
+			logger.error('WebServerManager', 'Failed to load favorites', {
 				error: error instanceof Error ? error.message : String(error),
 			});
 		}
@@ -499,7 +573,7 @@ class WebServerManager {
 		if (!this.isRunning) return;
 
 		const streamingService = getWebStreamingService();
-		streamingService.onStateChange(this.internalState);
+		streamingService.forceBroadcast(this.internalState);
 	}
 
 	/**

@@ -5,6 +5,8 @@ import type {RadioSeed} from './radio.types.ts';
 export interface PlayAction {
 	readonly category: 'PLAY';
 	track: Track;
+	queue?: Track[];
+	queuePosition?: number;
 }
 
 export interface PauseAction {

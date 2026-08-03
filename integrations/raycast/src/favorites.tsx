@@ -25,13 +25,18 @@ export default function Favorites() {
 		void fetchFavorites();
 	}, []);
 
-	const play = async (track: Track): Promise<void> => {
+	const play = async (track: Track, index: number): Promise<void> => {
 		const toast = await showToast({
 			style: Toast.Style.Animated,
 			title: `Playing ${track.title}`,
 		});
 		try {
-			await sendPlayerAction({category: 'PLAY', track});
+			await sendPlayerAction({
+				category: 'PLAY',
+				track,
+				queue: tracks,
+				queuePosition: index,
+			});
 			toast.style = Toast.Style.Success;
 			toast.title = `Playing ${track.title}`;
 		} catch (caught) {
@@ -92,7 +97,7 @@ export default function Favorites() {
 					description="Add favorites from the Player Controller or Search."
 				/>
 			) : (
-				tracks.map(track => {
+				tracks.map((track, index) => {
 					const artist =
 						track.artists.map(a => a.name).join(', ') || 'Unknown artist';
 					return (
@@ -108,7 +113,7 @@ export default function Favorites() {
 									<Action
 										title="Play"
 										icon={Icon.Play}
-										onAction={() => play(track)}
+										onAction={() => play(track, index)}
 									/>
 									<Action
 										title="Remove from Favorites"

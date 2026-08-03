@@ -1,3 +1,17 @@
+## [1.1.0](https://github.com/netflyapp/youtube-music-cli/compare/v1.0.0...HEAD) (2026-08-03)
+
+### Features
+
+- **raycast:** add Raycast extension with web server integration ([95f1f9a](https://github.com/netflyapp/youtube-music-cli/commit/95f1f9ac25abb786a353b03b17b1fbbddaaa3bde)) — search songs, manage favorites, and control playback from Raycast
+
+### Bug Fixes
+
+- **raycast:** populate queue on PLAY so Next/Previous track commands work from Raycast ([045ff6f](https://github.com/netflyapp/youtube-music-cli/commit/045ff6fbeee12589aa2e460dfa8cf6836a9a5056))
+- **raycast:** sync internalState from PlayerProvider so TOGGLE_FAVORITE has currentTrack ([594a67a](https://github.com/netflyapp/youtube-music-cli/commit/594a67a5e050b70e0818ed3e6c2d9de14a26dc32))
+- **web:** accept optional `queue`/`queuePosition` on PLAY so Search and Favorites send the full track list, making Next/Previous navigate the actual list
+
+---
+
 ## [1.0.0](https://github.com/netflyapp/youtube-music-cli/compare/v0.0.94...v1.0.0) (2026-07-12)
 
 > **Fork release** by [Miłosz Zając](https://github.com/netflyapp) — based on [involvex/youtube-music-cli](https://github.com/involvex/youtube-music-cli) v0.0.94.

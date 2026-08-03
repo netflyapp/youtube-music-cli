@@ -44,4 +44,4 @@ export type PlayerAction =
 	| {category: 'TOGGLE_SHUFFLE'}
 	| {category: 'TOGGLE_REPEAT'}
 	| {category: 'TOGGLE_FAVORITE'; track?: Track}
-	| {category: 'PLAY'; track: Track};
+	| {category: 'PLAY'; track: Track; queue?: Track[]; queuePosition?: number};

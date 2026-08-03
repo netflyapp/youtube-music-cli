@@ -38,13 +38,18 @@ export default function Search() {
 		};
 	}, [query]);
 
-	const play = async (track: Track): Promise<void> => {
+	const play = async (track: Track, index: number): Promise<void> => {
 		const toast = await showToast({
 			style: Toast.Style.Animated,
 			title: `Playing ${track.title}`,
 		});
 		try {
-			await sendPlayerAction({category: 'PLAY', track});
+			await sendPlayerAction({
+				category: 'PLAY',
+				track,
+				queue: results.map(item => item.data),
+				queuePosition: index,
+			});
 			toast.style = Toast.Style.Success;
 			toast.title = `Playing ${track.title}`;
 		} catch (caught) {
@@ -75,7 +80,7 @@ export default function Search() {
 					description={`${error}\n\nMake sure the player is running with ymc --web.`}
 				/>
 			) : (
-				results.map(({data: track}) => {
+				results.map(({data: track}, index) => {
 					const artist =
 						track.artists.map(item => item.name).join(', ') || 'Unknown artist';
 					return (
@@ -91,7 +96,7 @@ export default function Search() {
 									<Action
 										title="Play"
 										icon={Icon.Play}
-										onAction={() => play(track)}
+										onAction={() => play(track, index)}
 									/>
 									<Action.OpenInBrowser
 										title="Open on YouTube Music"

@@ -189,7 +189,16 @@ class WebServerManager {
 		switch (action.category) {
 			case 'PLAY': {
 				if (action.track) {
-					if (this.internalState.queue.length === 0) {
+					if (action.queue) {
+						this.internalState.queue = action.queue;
+						this.internalState.queuePosition = Math.max(
+							0,
+							action.queuePosition ??
+								action.queue.findIndex(
+									track => track.videoId === action.track?.videoId,
+								),
+						);
+					} else if (this.internalState.queue.length === 0) {
 						this.internalState.queue = [action.track];
 						this.internalState.queuePosition = 0;
 					}

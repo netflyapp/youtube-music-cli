@@ -328,22 +328,33 @@ bun run build:win32 && dist/ymc-win32.exe  # compiled binary
 Control youtube-music-cli directly from [Raycast](https://raycast.com) — search, play, and manage playback without leaving your launcher.
 
 ```bash
-# 1. Start the web server (required)
-ymc web
+# 1. Start the web server (required) — port 8080 by default
+ymc --web
 
 # 2. In Raycast: Add Extension from local → select integrations/raycast
 ```
 
+> 💡 **Always-on playback:** run `ymc --web-only` (e.g. via a LaunchAgent) to keep the server running in the background — the Raycast extension controls it over WebSocket, no terminal needed.
+
 ### Commands
 
-| Command               | Description             |
-| --------------------- | ----------------------- |
-| Search YouTube Music  | Find and play tracks    |
-| Now Playing           | View current track info |
-| Play / Pause          | Toggle playback         |
-| Next / Previous Track | Skip tracks             |
+| Command           | Description                                  |
+| ----------------- | -------------------------------------------- |
+| Search Songs      | Search YouTube Music and play tracks         |
+| Favorites         | View and play your favorite tracks           |
+| Add to Favorites  | Add the current track to favorites           |
+| Player Controller | View and control the currently playing track |
+| Toggle Playback   | Play or pause                                |
+| Next Track        | Skip to the next track in the queue          |
+| Previous Track    | Go back to the previous track                |
 
-The CLI runs a lightweight HTTP server (`web/server.ts`) on `localhost:3737`. The Raycast extension communicates with it via REST API.
+The CLI runs a lightweight WebSocket server on `localhost:8080`. The Raycast extension communicates with it via WebSocket at `/ws` — the search and favorites views send the full track list as the queue, so Next/Previous navigate the actual list.
+
+### Screenshots
+
+![Raycast extension](assets/screenshots/raycast-1.png)
+
+![Raycast extension — Favorites and playback](assets/screenshots/raycast-2.png)
 
 ---
 

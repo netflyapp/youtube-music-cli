@@ -93,7 +93,7 @@
 		"react": "^19.2.7",
 		"ws": "^8.21.0",
 		"youtube-ext": "^1.1.25",
-		"youtubei.js": "^17.2.0"
+		"youtubei.js": "^18.0.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
